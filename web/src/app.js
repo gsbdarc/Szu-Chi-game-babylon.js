@@ -1,13 +1,13 @@
 import {buildHall,makePlate,stationX} from './world.js';
 import {ResearchSession,download} from './research.js';
-import {Placement,sampleShape} from './placement.js';
+import {Placement,sampleShape,CELL} from './placement.js';
 const B=BABYLON,V=(x,y,z)=>new B.Vector3(x,y,z),$=id=>document.getElementById(id);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 let game;
 
 class BuffetGame {
-  constructor(research,foods){this.research=research;this.foods=foods;this.portions=[];this.station=0;this.started=false;this.moving=false;this.plateView=false;this.finishing=false;this.finished=research.data.completed;this.selected=null;this.models=new Map();this.shapeCache=new Map();this.placement=new Placement();this.soundOn=research.config.soundEnabled;this.dialog=$('dialog');}
+  constructor(research,foods){this.research=research;this.foods=foods;this.portions=[];this.station=0;this.started=false;this.moving=false;this.plateView=false;this.finishing=false;this.finished=research.data.completed;this.selected=null;this.models=new Map();this.shapeCache=new Map();this.tips=new Map();this.placement=new Placement();this.soundOn=research.config.soundEnabled;this.dialog=$('dialog');}
   async init(){
     this.canvas=$('scene');this.engine=new B.Engine(this.canvas,true,{preserveDrawingBuffer:true,stencil:true,powerPreference:'high-performance'});this.engine.setHardwareScalingLevel(1/Math.min(window.devicePixelRatio||1,1.5));
     this.scene=new B.Scene(this.engine);this.scene.clearColor=new B.Color4(.82,.86,.87,1);this.scene.environmentTexture=B.CubeTexture.CreateFromPrefilteredData('vendor/environment.env',this.scene);this.scene.environmentIntensity=.55;
@@ -24,7 +24,7 @@ class BuffetGame {
       const f=this.foods[i];$('loading-text').textContent=`Preparing ${f.name.toLowerCase()} · ${i+1} of ${this.foods.length}`;
       const model=await B.LoadAssetContainerAsync(`assets/food/${f.id}.glb`,this.scene);this.models.set(f.id,model);
       const station=new B.TransformNode(f.name+' station',this.scene);station.position=V(stationX(i),.946,0);
-      for(let k=0;k<(f.id==='pizza'?4:6);k++){const root=this.spawn(f.id);root.parent=station;root.position=V((k%3-1)*.139,0,(Math.floor(k/3)-.5)*.17);root.rotation.y=k%2?.2:-.15;for(const mesh of root.getChildMeshes())mesh.metadata={station:i};}
+      for(const pose of this.trayLayout(f.id)){const root=this.spawn(f.id);root.parent=station;root.position=V(pose.x,0,pose.z);root.rotation.y=pose.yaw;for(const mesh of root.getChildMeshes())mesh.metadata={station:i};}
       const hit=B.MeshBuilder.CreateBox('Dish target',{width:.52,height:.09,depth:.43},this.scene);hit.parent=station;hit.position.y=.025;hit.visibility=0;hit.isPickable=true;hit.metadata={station:i};
       hall.label(f.name,[stationX(i),.946,-.348],.221,.075,true);
     }
@@ -32,7 +32,27 @@ class BuffetGame {
     this.bind();this.fitCamera();await this.scene.whenReadyAsync();$('loading').hidden=true;
     if(this.finished){this.started=true;this.plate.setEnabled(true);await this.moveView(true,false);this.showCompletion();}else this.welcome();this.refresh();
     // Read-only diagnostics for repeatable canvas and placement checks.
-    Object.defineProperty(window,'buffet',{value:{snapshot:()=>({station:this.station,started:this.started,moving:this.moving,plateView:this.plateView,finished:this.finished,selected:this.selected?.portionId,session:structuredClone(this.research.data),saved:this.research.saved,saveError:this.research.error,engine:'Babylon.js '+B.Engine.Version,meshes:this.scene.meshes.length,fps:this.engine.getFps(),portions:this.portions.map(p=>({id:p.portionId,food:p.foodId,x:p.x,y:p.y,z:p.z,extent:Math.max(...p.shape.map(s=>Math.hypot(p.x+s.ix*.003,p.z+s.iz*.003)))}))}),point:(name,index=0)=>this.project(name==='dish'?V(stationX(this.station),.97,0):name==='portion'&&this.portions[index]?this.portions[index].root.getAbsolutePosition().add(V(0,.025,0)):this.plate.getAbsolutePosition().add(V(0,.02,0)))}});
+    Object.defineProperty(window,'buffet',{value:{snapshot:()=>({station:this.station,started:this.started,moving:this.moving,plateView:this.plateView,finished:this.finished,selected:this.selected?.portionId,session:structuredClone(this.research.data),saved:this.research.saved,saveError:this.research.error,engine:'Babylon.js '+B.Engine.Version,audio:this.audioState(),meshes:this.scene.meshes.length,fps:this.engine.getFps(),portions:this.portions.map(p=>({id:p.portionId,food:p.foodId,x:p.x,y:p.y,z:p.z,extent:Math.max(...p.shape.map(s=>Math.hypot(p.x+s.ix*.003,p.z+s.iz*.003)))}))}),point:(name,index=0)=>this.project(name==='dish'?V(stationX(this.station),.97,0):name==='portion'&&this.portions[index]?this.portions[index].root.getAbsolutePosition().add(V(0,.025,0)):this.plate.getAbsolutePosition().add(V(0,.02,0)))}});
+  }
+  // The pizza asset is one sixth of a 27.9 cm pie, so its copies are rebuilt into a whole
+  // cut pizza instead of being scattered through the generic tray grid. The wedge tip is
+  // whichever end of the footprint is narrowest, measured so this survives a model change.
+  pieTip(id){
+    if(!this.tips.has(id)){
+      const root=this.spawn(id),shape=sampleShape(root,B.Vector3.Zero());root.dispose();
+      const span=iz=>{const row=shape.filter(v=>Math.abs(v.iz-iz)<=1).map(v=>v.ix);return row.length?Math.max(...row)-Math.min(...row):Infinity;};
+      const far=Math.max(...shape.map(v=>v.iz)),near=Math.min(...shape.map(v=>v.iz));
+      this.tips.set(id,(span(far)<span(near)?far:near)*CELL);
+    }
+    return this.tips.get(id);
+  }
+  trayLayout(id){
+    if(id!=='pizza')return Array.from({length:6},(_,k)=>({x:(k%3-1)*.139,z:(Math.floor(k/3)-.5)*.17,yaw:k%2?.2:-.15}));
+    // Turning a slice about its own origin swings the tip away from the pan centre, so each
+    // slice is offset to bring all six tips back together, then pushed out along its own
+    // axis by a hairline so the cuts stay visible instead of welding into one disc.
+    const tip=this.pieTip(id),out=tip+Math.sign(tip)*.0016;
+    return Array.from({length:6},(_,k)=>{const yaw=k*Math.PI/3+.09;return {x:-Math.sin(yaw)*out,z:-Math.cos(yaw)*out,yaw};});
   }
   spawn(id){const root=new B.TransformNode(id+' portion',this.scene);const instance=this.models.get(id).instantiateModelsToScene(n=>n+' copy',false,{doNotInstantiate:true});for(const node of instance.rootNodes)node.parent=root;for(const mesh of root.getChildMeshes()){mesh.isPickable=true;mesh.receiveShadows=true;this.shadows.addShadowCaster(mesh);}return root;}
   project(point){const rect=this.canvas.getBoundingClientRect(),p=B.Vector3.Project(point,B.Matrix.Identity(),this.scene.getTransformMatrix(),this.camera.viewport.toGlobal(this.engine.getRenderWidth(),this.engine.getRenderHeight()));return {x:rect.x+p.x/this.engine.getRenderWidth()*rect.width,y:rect.y+p.y/this.engine.getRenderHeight()*rect.height};}
@@ -58,10 +78,23 @@ class BuffetGame {
   }
   async begin(){if(this.started)return;this.close();this.started=true;this.moving=true;this.overview=true;this.research.record('begin');this.initAudio();this.refresh();await wait(this.research.config.introSeconds*1000);this.overview=false;this.moving=false;this.plate.setEnabled(true);this.research.record('station_view',this.current.id);await this.moveView();}
   async navigate(index){if(this.busy||index<0||index>=this.foods.length)return;this.selected=null;this.station=index;this.research.record('station_view',this.current.id);this.tone(510,.055);await this.moveView(false);}
-  shapeFor(id,root,angle){const key=id+':'+angle;if(!this.shapeCache.has(key))this.shapeCache.set(key,sampleShape(root,angle));return this.shapeCache.get(key);}
+  shapeFor(id,root,rotation){const key=id+':'+[rotation.x,rotation.y,rotation.z].map(v=>v.toFixed(3));if(!this.shapeCache.has(key))this.shapeCache.set(key,sampleShape(root,rotation));return this.shapeCache.get(key);}
+  // Food settles at a slight angle rather than perfectly flat. The lean is scaled by how
+  // tall the item is relative to its footprint, so a slice or a cookie leans visibly while
+  // a burger stays upright instead of looking like it is toppling over.
+  settle(root){
+    const {min,max}=root.getHierarchyBoundingVectors(),radius=Math.max(max.x-min.x,max.z-min.z)/2;
+    // Calibrated across the menu: a slice or cookie leans up to ~2.8 deg, a mound of rice
+    // barely moves, and a burger, roll or cake stays flat on its base.
+    const amplitude=.075*Math.max(0,1-(max.y-min.y)/radius/.85);
+    const lean=(.45+.55*Math.random())*amplitude,spin=Math.random()*Math.PI*2;
+    return {x:Math.cos(spin)*lean,z:Math.sin(spin)*lean};
+  }
   createPortion(food,record=null,animate=true){
-    const root=this.spawn(food.id);root.parent=this.plate;const angle=record?.rotation??((this.portions.length*137.5)%360)*Math.PI/180;const shape=this.shapeFor(food.id,root,angle);root.rotation.y=angle;
-    const pose=record?.position||this.placement.fit(shape),p={portionId:record?.portionId||crypto.randomUUID().replaceAll('-',''),foodId:food.id,addedAt:record?.addedAt??this.research.elapsed,root,angle,shape,...pose};
+    const root=this.spawn(food.id);root.parent=this.plate;
+    const angle=record?.rotation??((this.portions.length*137.5)%360)*Math.PI/180,tilt=record?.tilt??this.settle(root);
+    const rotation=new B.Vector3(tilt.x,angle,tilt.z),shape=this.shapeFor(food.id,root,rotation);root.rotation=rotation;
+    const pose=record?.position||this.placement.fit(shape),p={portionId:record?.portionId||crypto.randomUUID().replaceAll('-',''),foodId:food.id,addedAt:record?.addedAt??this.research.elapsed,root,angle,tilt,shape,...pose};
     root.position.copyFromFloats(p.x,p.y,p.z);for(const mesh of root.getChildMeshes())mesh.metadata={portion:p.portionId};this.portions.push(p);this.placement.occupy(p);
     if(animate){p.animating=true;const from=V(0,.075,.4),to=root.position.clone(),start=performance.now();const frame=()=>{if(root.isDisposed()||!p.animating)return;const t=Math.min(1,(performance.now()-start)/430),s=t*t*(3-2*t);root.position=B.Vector3.Lerp(from,to,s);root.position.y+=Math.sin(t*Math.PI)*.045;if(t<1)requestAnimationFrame(frame);else p.animating=false;};frame();}
     return p;
@@ -85,7 +118,7 @@ class BuffetGame {
   modal(title,body,actions,locked=false){this.previousFocus=document.activeElement;$('dialog-title').textContent=title;$('dialog-body').innerHTML=body;$('dialog-actions').replaceChildren();$('close-dialog').hidden=locked;this.locked=locked;for(const [text,fn,primary] of actions){const b=document.createElement('button');b.textContent=text;if(primary)b.className='primary';b.onclick=fn;$('dialog-actions').append(b);}if(!this.dialog.open)this.dialog.showModal();this.refresh();}
   close(){this.dialog.close();this.refresh();this.previousFocus?.focus();}
   welcome(){this.modal(this.research.config.studyTitle,`<p>Build a plate as you would in a cafeteria.<br>Take your time and choose what you would like.</p><div class="steps"><div><b>01 &nbsp; Browse</b><p>Move left or right along the buffet.</p></div><div><b>02 &nbsp; Serve</b><p>Tap a dish or drag it onto your plate.</p></div><div><b>03 &nbsp; Review</b><p>Check your plate, then finish your meal.</p></div></div><p class="study-instructions">${escapeHTML(this.research.config.instructions)}</p>${this.research.localOnly?'<p>Your meal and photographs are saved only in this browser. Download a copy to keep them.</p>':''}`,[[this.portions.length?'Continue your plate →':'Explore the buffet →',()=>this.begin(),true]],true);}
-  help(){if(this.moving||this.finishing)return;this.modal('Make yourself a plate',`<p>Use the arrows to explore the dishes. Click the current dish or <b>Add one portion</b> to serve it. You can also drag from its tray onto your plate.</p><p>Open <b>View plate</b> to select and rearrange individual portions.${this.research.config.allowRemoval?' Use Undo last or select a portion to remove it.':''}</p><p>When you are ready, choose <b>Review meal</b> and confirm. ${this.research.config.screenshotsEnabled?'Photograph saves an image of your plate.':''}</p><p>Keyboard: ← / → to browse · Space to serve · P to view your plate.</p>`,[['Back to the buffet',()=>this.close(),true]]);}
+  help(){if(this.moving||this.finishing)return;this.modal('Make yourself a plate',`<p>Use the arrows to explore the dishes. Click the current dish or <b>Add one portion</b> to serve it. You can also drag from its tray onto your plate.</p><p>Open <b>View plate</b> to select and rearrange individual portions.${this.research.config.allowRemoval?' Use Undo last or select a portion to remove it.':''}</p><p>When you are ready, choose <b>Review meal</b> and confirm. ${this.research.config.screenshotsEnabled?'Photograph saves an image of your plate.':''}</p><p>Keyboard: ← / → to browse · Space to serve · P to view your plate.</p><p class="credit">Dining room music: “Airport Lounge” by Kevin MacLeod (incompetech.com), <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>. Room ambience by lastraindrop (freesound.org), CC0.</p>`,[['Back to the buffet',()=>this.close(),true]]);}
   menu(){if(this.moving||this.finishing)return;this.modal('Today’s buffet',`<div class="menu-grid">${this.foods.map((f,i)=>`<button data-station="${i}"><img loading="lazy" src="assets/previews/${f.id}.png" alt="${escapeHTML(f.name)}">${escapeHTML(f.name)}<br><small>${this.count(f.id)} on your plate</small></button>`).join('')}</div>`,[['Back',()=>this.close()]]);for(const button of $('dialog-body').querySelectorAll('button'))button.onclick=()=>{if(!this.started||this.finished){this.close();return;}const i=Number(button.dataset.station);this.close();this.navigate(i);};}
   details(){if(this.moving)return;this.research.record('dish_information',this.current.id);this.modal(this.current.name,`<p>${escapeHTML(this.current.description)}</p><p><b>One selection:</b> ${escapeHTML(this.current.portionLabel)}</p><p>${escapeHTML(this.current.ingredients)}</p>`,[['Back to dish',()=>this.close(),true]]);}
   mealHTML(){return this.portions.length?this.foods.filter(f=>this.count(f.id)).map(f=>`<div class="meal-row"><span>${escapeHTML(f.name)}</span><span>${this.count(f.id)}</span></div>`).join(''):'<p>Your plate is empty. You can return to the buffet or finish without selecting any food.</p>';}
@@ -96,7 +129,34 @@ class BuffetGame {
   }
   async finish(){if(this.finishing||this.finished||this.moving)return;this.finishing=true;this.close();this.refresh();this.modal('Saving your meal','<p>Please keep this page open while your plate is saved.</p>',[],true);try{await wait(450);if(this.research.config.screenshotsEnabled)await this.capture(false);this.research.setPortions(this.portions);this.research.complete();this.finished=true;this.finishing=false;this.showCompletion();}catch(error){this.finishing=false;this.modal('Your meal is still here',`<p>We could not finish saving the plate photograph. ${escapeHTML(error.message)}</p>`,[['Return to review',()=>{this.close();this.review();}],['Try again',()=>this.finish(),true]]);}}
   showCompletion(){const actions=[['Download your choices',()=>download(JSON.stringify(this.research.data,null,2),`buffet-${this.research.data.sessionId}.json`)]];if(this.research.localOnly){actions.push(['Download meal and photographs',()=>this.research.recovery()],['Start a new meal',()=>{const url=new URL(location.href);url.searchParams.delete('sessionId');url.searchParams.set('SESSION_ID',crypto.randomUUID());location.assign(url.href);},true]);}else actions.push(['Retry saving',()=>this.research.flush()]);this.modal('Thank you for choosing a meal',this.mealHTML()+`<p id="completion-state">${escapeHTML($('save-state').textContent)}</p><p>${this.research.localOnly?'Your meal is saved only in this browser. Download it to keep a copy; it has not been sent to a researcher.':this.research.parentOrigin?'Once your survey receives your choices, use its Next button to continue.':'Your choices are recorded for this dining session.'}</p><small>Session ${escapeHTML(this.research.data.sessionId)}</small>`,actions,true);}
-  initAudio(){if(!this.research.config.soundEnabled||this.audio)return;this.audio=new AudioContext();this.gain=this.audio.createGain();this.gain.gain.value=this.soundOn?.12:0;this.gain.connect(this.audio.destination);const n=this.audio.sampleRate*6,buffer=this.audio.createBuffer(1,n,this.audio.sampleRate),data=buffer.getChannelData(0);let last=0;for(let i=0;i<n;i++){last+=(Math.random()*2-1-last)*.025;data[i]=last*.045;}const source=this.audio.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(this.gain);source.start();}
+  initAudio(){
+    if(!this.research.config.soundEnabled||this.audio)return;
+    const c=this.research.config;this.audio=new AudioContext();this.beds={};
+    // One master gate for the Sound button, then independent buses so the study can
+    // set music and room tone separately without touching the interface cues.
+    this.master=this.audio.createGain();this.master.gain.value=this.soundOn?1:0;this.master.connect(this.audio.destination);
+    this.gain=this.audio.createGain();this.gain.gain.value=.12;this.gain.connect(this.master);
+    if(c.ambienceEnabled&&c.ambienceVolume>0)this.bed('cafeteria-ambience',c.ambienceVolume);
+    if(c.musicEnabled&&c.musicVolume>0)this.bed('cafeteria-music',c.musicVolume);
+  }
+  async bed(id,volume){
+    const bus=this.audio.createGain();bus.gain.value=0;bus.connect(this.master);const entry=this.beds[id]={bus,volume,state:'loading'};
+    try{
+      const response=await fetch(`assets/audio/${id}.m4a`);if(!response.ok)throw new Error('HTTP '+response.status);
+      const buffer=await this.audio.decodeAudioData(await response.arrayBuffer());
+      const source=this.audio.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(bus);source.start();
+      // Each file's loop seam is pre-crossfaded, so only the first entry is ramped.
+      bus.gain.setValueAtTime(0,this.audio.currentTime);bus.gain.linearRampToValueAtTime(volume,this.audio.currentTime+3);
+      Object.assign(entry,{source,state:'playing',seconds:buffer.duration});
+      this.research.record('audio_started','','',id);
+    }catch(error){
+      entry.state='failed';this.research.record('audio_failed','','',id+': '+error.message);
+      if(id==='cafeteria-ambience')this.synthBed(bus,volume);
+    }
+  }
+  // Fallback room tone, a shade quieter than the recording, if the bed will not load or decode.
+  synthBed(bus,volume){const n=this.audio.sampleRate*6,buffer=this.audio.createBuffer(1,n,this.audio.sampleRate),data=buffer.getChannelData(0);let last=0;for(let i=0;i<n;i++){last+=(Math.random()*2-1-last)*.025;data[i]=last*.045;}const source=this.audio.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(bus);source.start();bus.gain.value=volume;this.beds['cafeteria-ambience'].state='synthesized';}
+  audioState(){return {context:this.audio?.state||'none',muted:!this.soundOn,beds:Object.fromEntries(Object.entries(this.beds||{}).map(([id,b])=>[id,{state:b.state,gain:Math.round(b.bus.gain.value*1e3)/1e3,seconds:b.seconds}]))};}
   tone(freq,seconds){if(!this.audio||!this.soundOn)return;this.audio.resume();const o=this.audio.createOscillator(),g=this.audio.createGain(),now=this.audio.currentTime;o.frequency.value=freq;g.gain.setValueAtTime(.3,now);g.gain.exponentialRampToValueAtTime(.001,now+seconds);o.connect(g);g.connect(this.gain);o.start();o.stop(now+seconds);}
   pointerPoint(event){const rect=this.canvas.getBoundingClientRect();return {x:event.clientX-rect.left,y:event.clientY-rect.top};}
   pick(event){const p=this.pointerPoint(event);return this.scene.pick(p.x,p.y,m=>m.isPickable&&!!m.metadata);}
@@ -104,7 +164,7 @@ class BuffetGame {
   bind(){
     $('previous').onclick=()=>this.navigate(this.station-1);$('next').onclick=()=>this.navigate(this.station+1);$('add').onclick=()=>this.add();$('view').onclick=()=>this.togglePlate();$('undo').onclick=()=>this.remove(this.portions.at(-1));$('remove').onclick=()=>this.remove(this.selected);$('photo').onclick=()=>this.capture().catch(e=>this.toast(e.message));$('review').onclick=()=>this.review();$('menu').onclick=()=>this.menu();$('help').onclick=()=>this.help();$('details').onclick=()=>this.details();$('recovery').onclick=()=>this.research.recovery();$('close-dialog').onclick=()=>this.close();
     this.dialog.addEventListener('cancel',event=>{if(this.locked)event.preventDefault();});this.dialog.addEventListener('close',()=>this.refresh());
-    $('sound').onclick=()=>{if(!this.research.config.soundEnabled)return;this.initAudio();this.soundOn=!this.soundOn;this.gain.gain.value=this.soundOn?.12:0;this.research.record(this.soundOn?'sound_unmuted':'sound_muted');this.refresh();};
+    $('sound').onclick=()=>{if(!this.research.config.soundEnabled)return;this.initAudio();this.soundOn=!this.soundOn;this.audio.resume();this.master.gain.setTargetAtTime(this.soundOn?1:0,this.audio.currentTime,.05);this.research.record(this.soundOn?'sound_unmuted':'sound_muted');this.refresh();};
     $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{this.toast('Full screen is not available in this browser.');}};
     window.addEventListener('keydown',e=>{if(this.busy||e.repeat||e.altKey||e.ctrlKey||e.metaKey||e.target.matches('input,textarea,select')||(e.key===' '&&e.target.closest('button')))return;switch(e.key){case'ArrowLeft':e.preventDefault();this.navigate(this.station-1);break;case'ArrowRight':e.preventDefault();this.navigate(this.station+1);break;case' ':e.preventDefault();if(!this.plateView)this.add();break;case'p':case'P':this.togglePlate();break;}});
     this.canvas.addEventListener('pointerdown',event=>{if(this.busy||event.button!==0)return;const hit=this.pick(event),meta=hit?.pickedMesh?.metadata;this.press={id:event.pointerId,x:event.clientX,y:event.clientY,meta,drag:false};if(this.plateView&&meta?.portion){this.selected=this.portions.find(p=>p.portionId===meta.portion);this.refresh();}this.canvas.setPointerCapture(event.pointerId);});

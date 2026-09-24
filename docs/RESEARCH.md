@@ -7,7 +7,21 @@ Run `python3 server/buffet_server.py` from the project directory and open http:/
 
 ## Study settings and identity
 
-Open `/researcher` to edit condition instructions, included foods/order, screenshots, sound, removal, portion limit and overview duration. Saving updates `study/conditions.json`. Existing sessions retain their original settings; new sessions use the revised condition. Defaults `default`, `no_screenshot`, and `quiet` are examples, not inferred experimental assignments.
+Open `/researcher` to edit condition instructions, included foods/order, screenshots, sound, background music, room ambience, removal, portion limit and overview duration. Saving updates `study/conditions.json`. Existing sessions retain their original settings; new sessions use the revised condition. Defaults `default`, `no_screenshot`, `no_music`, `music_only` and `quiet` are examples, not inferred experimental assignments.
+
+## Cafeteria audio
+
+Two independent looping beds play through separate gain buses, so music can be manipulated without changing the room tone or the interface cues:
+
+| Field | Meaning |
+| --- | --- |
+| `soundEnabled` | Master gate. `false` builds no audio at all and disables the participant Sound button. |
+| `musicEnabled` / `musicVolume` | Background music bed (“Airport Lounge”, CC BY 3.0), gain 0–1. |
+| `ambienceEnabled` / `ambienceVolume` | Recorded university-cafeteria room tone (CC0), gain 0–1. |
+
+Both files are trimmed to a five-minute loop with a crossfaded seam and levelled to a fixed RMS (music −20 dBFS, ambience −26 dBFS) so the delivered stimulus is identical across participants; `web/assets/audio/manifest.json` records the SHA-256 of each and `tools/audit_assets.py` verifies them. Regenerate with `python3 tools/build_audio.py`. Playback is reported in `window.buffet.snapshot().audio` and logged as `audio_started` / `audio_failed` events. If a bed cannot be fetched or decoded the ambience falls back to a synthesised room tone rather than going silent, which the `audio_failed` event records; treat affected sessions accordingly.
+
+Background music is a known influence on eating pace and intake, so it is an experimental variable here rather than set dressing. Set it deliberately per condition and keep `buffet_condition` in your survey so it can be modelled.
 
 Example participant URL:
 
@@ -29,11 +43,11 @@ The app generates a separate random internal session ID and write credential. On
 
 The schema stays compatible with Asta_test's version 1 research backend. A session contains identifiers, condition/configuration, revision, UTC start/completion timestamps, elapsed seconds, `completed`, `portions[]` and append-only `events[]`. The additional `engine` field identifies this implementation as `babylonjs`.
 
-Each portion has its own `portionId`, `foodId`, `plateId="main"`, and original `addedAt` elapsed time. `position` and `rotation` preserve the plate arrangement across refresh. Counts derive from individual portion records, not meshes or clicks. Removing a portion removes its current record but preserves the interaction history. One portion of each selected food increments its count by one.
+Each portion has its own `portionId`, `foodId`, `plateId="main"`, and original `addedAt` elapsed time. `position`, `rotation` (yaw, radians) and `tilt` (settle pitch/roll, radians) preserve the plate arrangement across refresh. `tilt` is additive to the version 1 schema; the backend does not require it and older records restore without it. Counts derive from individual portion records, not meshes or clicks. Removing a portion removes its current record but preserves the interaction history. One portion of each selected food increments its count by one.
 
 Elapsed time accumulates from session initialization, including loading, instructions and overview, and freezes at completion. Closing the page excludes closed time; recovery resumes the last saved elapsed value. Client timestamps describe the interaction, while database timestamps record server receipt. For time after starting the buffet, use the `begin` and `complete` event times.
 
-Events: `begin`, `station_view`, `dish_view`, `plate_view`, `dish_information`, `portion_added`, `portion_removed`, `portion_moved`, `review`, `complete`, `screenshot_captured`, `screenshot_saved`, `sound_muted`, `sound_unmuted`. In `screenshot_saved`, `portionId` carries the image SHA-256, matching the original bridge convention. No nutritional, eating or waste outcomes are inferred.
+Events: `begin`, `station_view`, `dish_view`, `plate_view`, `dish_information`, `portion_added`, `portion_removed`, `portion_moved`, `review`, `complete`, `screenshot_captured`, `screenshot_saved`, `sound_muted`, `sound_unmuted`, `audio_started`, `audio_failed`. The two audio events carry the bed identifier in `detail`. In `screenshot_saved`, `portionId` carries the image SHA-256, matching the original bridge convention. No nutritional, eating or waste outcomes are inferred.
 
 Snapshots and pending PNGs are saved to IndexedDB before upload. Failed requests retry every three seconds. Full snapshots have increasing revisions; retries of the same revision are idempotent, history cannot shrink and completed contents cannot change. SQLite commits sessions, events and portion records together with FULL synchronization.
 

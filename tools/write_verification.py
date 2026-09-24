@@ -10,12 +10,14 @@ reports={
  'captureGuard':read('docs/evidence/capture-guard.json'),
  'assets':read('docs/ASSET_AUDIT.json')
 }
-assert not reports['game']['errors'] and len(reports['game']['cases'])==5
+assert not reports['game']['errors'] and len(reports['game']['cases'])==6
 assert all(not b['errors'] and b['completed'] for b in reports['browsers'].values())
 assert reports['capacityTouchKeyboard']['capacity']['portions']==40
 assert reports['captureGuard']['completionSaved']
 assert len(reports['assets']['foods'])==15
-assert 'Ran 14 tests' in (ROOT/'artifacts/server-tests.txt').read_text()
+assert {a['role'] for a in reports['assets']['audio']}=={'music','ambience'}
+assert all(bed['state']=='playing' for bed in reports['game']['cases']['audio']['beds'].values())
+assert 'Ran 15 tests' in (ROOT/'artifacts/server-tests.txt').read_text()
 assert '\nOK' in (ROOT/'artifacts/server-tests.txt').read_text()
 assert 'PASS:' in (ROOT/'artifacts/qualtrics-bridge-tests.txt').read_text()
 files=list((ROOT/'web/src').glob('*'))+[ROOT/'server/buffet_server.py',ROOT/'web/index.html']

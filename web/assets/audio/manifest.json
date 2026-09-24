@@ -1,0 +1,36 @@
+[
+  {
+    "id": "cafeteria-music",
+    "role": "music",
+    "title": "Airport Lounge",
+    "creator": "Kevin MacLeod (incompetech.com)",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "attribution": "\u201cAirport Lounge\u201d by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 3.0.",
+    "source": "https://archive.org/download/Incompetech/mp3-royaltyfree/Airport%20Lounge.mp3",
+    "seconds": 305.62,
+    "seamCrossfadeSeconds": 2.0,
+    "targetRmsDbfs": -20.0,
+    "file": "cafeteria-music.m4a",
+    "codec": "AAC-LC 44.1 kHz stereo",
+    "bytes": 3725595,
+    "sha256": "289c8065d67250ec059c62d89fbd1bd4be5f9bc3bfb43b704b261fd89664b2f8"
+  },
+  {
+    "id": "cafeteria-ambience",
+    "role": "ambience",
+    "title": "Busy cafeteria environment in university - Ambient",
+    "creator": "lastraindrop (freesound.org)",
+    "license": "CC0 1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Public domain (CC0); no attribution required.",
+    "source": "https://freesound.org/people/lastraindrop/sounds/717748",
+    "seconds": 300.0,
+    "seamCrossfadeSeconds": 4.0,
+    "targetRmsDbfs": -26.0,
+    "file": "cafeteria-ambience.m4a",
+    "codec": "AAC-LC 44.1 kHz stereo",
+    "bytes": 2446501,
+    "sha256": "158a6788a374e24c649abc10a33ccc883eddd74eb0876fb0b128da0c42da4120"
+  }
+]

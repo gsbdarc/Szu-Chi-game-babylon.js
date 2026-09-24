@@ -40,6 +40,16 @@ with tempfile.TemporaryDirectory(prefix='buffet-babylon-test-') as tmp:
             context=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True)
             page=context.new_page();check_errors(page)
             start(page);shot(page,'desktop-station')
+            # Both licensed beds must decode and loop; a bed that fell back to the
+            # synthesised room tone would change what participants hear.
+            page.wait_for_function("Object.values(window.buffet.snapshot().audio.beds).every(b=>b.state==='playing')",timeout=60000)
+            page.wait_for_function("window.buffet.snapshot().audio.beds['cafeteria-music'].gain>.3",timeout=15000)
+            audio=snapshot(page)['audio'];assert set(audio['beds'])=={'cafeteria-music','cafeteria-ambience'},audio
+            assert not audio['muted'] and audio['beds']['cafeteria-ambience']['seconds']>240,audio
+            page.locator('#sound').click();page.wait_for_timeout(300)
+            assert snapshot(page)['audio']['muted'] and any(e['eventType']=='sound_muted' for e in snapshot(page)['session']['events'])
+            page.locator('#sound').click();page.wait_for_timeout(300);assert not snapshot(page)['audio']['muted']
+            REPORT['cases']['audio']=snapshot(page)['audio']
             # Single click and drag from the current serving tray, with one event per portion.
             click3d(page,'dish');page.wait_for_timeout(500)
             assert len(snapshot(page)['portions'])==1,'Tray click did not add exactly one portion'
