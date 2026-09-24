@@ -19,22 +19,11 @@ float hash(float n){return fract(sin(n)*43758.5453);}
 void main(){
   vec2 px=1./screenSize,c=vUV-.5;
   float r=length(c*vec2(screenSize.x/screenSize.y,1.));
-  // Kuwahara filter: each pixel takes the mean of its least-varied quadrant, which dissolves
-  // texture grain into flat patches of colour while keeping edges crisp.
-  vec3 m0=vec3(0.),m1=vec3(0.),m2=vec3(0.),m3=vec3(0.),s0=vec3(0.),s1=vec3(0.),s2=vec3(0.),s3=vec3(0.);
-  for(int j=0;j<=3;j++)for(int i=0;i<=3;i++){
-    vec3 a0=texture2D(textureSampler,vUV+vec2(-i,-j)*px).rgb,a1=texture2D(textureSampler,vUV+vec2(i,-j)*px).rgb,a2=texture2D(textureSampler,vUV+vec2(-i,j)*px).rgb,a3=texture2D(textureSampler,vUV+vec2(i,j)*px).rgb;
-    m0+=a0;s0+=a0*a0;m1+=a1;s1+=a1*a1;m2+=a2;s2+=a2*a2;m3+=a3;s3+=a3*a3;}
-  m0/=16.;m1/=16.;m2/=16.;m3/=16.;
-  float v0=dot(s0/16.-m0*m0,vec3(1.)),v1=dot(s1/16.-m1*m1,vec3(1.)),v2=dot(s2/16.-m2*m2,vec3(1.)),v3=dot(s3/16.-m3*m3,vec3(1.));
-  vec3 col=m0;float best=v0;if(v1<best){best=v1;col=m1;}if(v2<best){best=v2;col=m2;}if(v3<best){col=m3;}
   vec2 off=c*aberration*.014;
-  col.r=mix(col.r,texture2D(textureSampler,vUV+off).r,min(1.,aberration*.4));col.b=mix(col.b,texture2D(textureSampler,vUV-off).b,min(1.,aberration*.4));
-  // Hard cel shading: three flat tones per hue (shadow, base, light), then push saturation.
-  float l=luma(col),band=l<.28?.2:l<.62?.5:.84;
-  col=mix(col,col*(band/max(l,.02)),.85);
-  col=max(mix(vec3(luma(col)),col,1.4),0.);
-  l=band;
+  vec3 col=vec3(texture2D(textureSampler,vUV+off).r,texture2D(textureSampler,vUV).g,texture2D(textureSampler,vUV-off).b);
+  // Flat tones come from the toon materials; here only a mild saturation push.
+  col=max(mix(vec3(luma(col)),col,1.2),0.);
+  float l=luma(col);
   // Ink lines from depth discontinuities and strong luminance edges.
   float d=texture2D(depthSampler,vUV).r;
   float dx=abs(texture2D(depthSampler,vUV+vec2(px.x,0.)).r-texture2D(depthSampler,vUV-vec2(px.x,0.)).r);
@@ -46,8 +35,8 @@ void main(){
   col=mix(col,vec3(.13,.07,.16),max(de,le*.7)*.9);
   // Manga screentone dots in the shadows.
   vec2 g=mat2(.707,-.707,.707,.707)*gl_FragCoord.xy/5.;
-  float shade=smoothstep(.42,.1,l);
-  col*=1.-.35*shade*step(length(fract(g)-.5),.42*shade+.08);
+  float shade=smoothstep(.2,.06,l);
+  col*=1.-.3*shade*step(length(fract(g)-.5),.42*shade+.08);
   // Speed lines radiate from the centre while the camera travels.
   float a=atan(c.y,c.x),line=step(.8,hash(floor(a*90.)+floor(time*20.)));
   col=mix(col,vec3(1.),line*smoothstep(.2,.62,r)*speed*.8);
@@ -58,7 +47,7 @@ void main(){
 
 function sprite(scene,name,draw,size=128){const t=new B.DynamicTexture(name,size,scene,true);const c=t.getContext();c.clearRect(0,0,size,size);draw(c,size);t.update();t.hasAlpha=true;return t;}
 const petal=(c,s)=>{c.translate(s/2,s/2);const g=c.createRadialGradient(0,0,2,0,0,s*.45);g.addColorStop(0,'#fff4f9');g.addColorStop(1,'#ff8fc0');c.fillStyle=g;c.beginPath();c.moveTo(0,-s*.42);c.bezierCurveTo(s*.36,-s*.3,s*.3,s*.26,0,s*.42);c.bezierCurveTo(-s*.3,s*.26,-s*.36,-s*.3,0,-s*.42);c.fill();c.globalCompositeOperation='destination-out';c.beginPath();c.moveTo(0,-s*.28);c.lineTo(-s*.09,-s*.47);c.lineTo(s*.09,-s*.47);c.fill();};
-const star=(c,s)=>{c.translate(s/2,s/2);const g=c.createRadialGradient(0,0,0,0,0,s*.5);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(255,250,210,.6)');g.addColorStop(1,'rgba(255,240,180,0)');c.fillStyle=g;c.fillRect(-s/2,-s/2,s,s);c.fillStyle='#fff';c.beginPath();for(let i=0;i<4;i++){c.rotate(Math.PI/2);c.moveTo(0,0);c.quadraticCurveTo(s*.05,-s*.05,0,-s*.48);c.quadraticCurveTo(-s*.05,-s*.05,0,0);}c.fill();};
+const star=(c,s)=>{c.translate(s/2,s/2);c.beginPath();for(let i=0;i<4;i++){c.rotate(Math.PI/2);c.moveTo(0,0);c.quadraticCurveTo(s*.07,-s*.07,0,-s*.44);c.quadraticCurveTo(-s*.07,-s*.07,0,0);}c.fillStyle='#ffe45c';c.strokeStyle='#22122a';c.lineWidth=s*.035;c.lineJoin='round';c.fill();c.stroke();c.fillStyle='#fff';c.beginPath();c.arc(0,0,s*.06,0,Math.PI*2);c.fill();};
 const heart=(c,s)=>{c.translate(s/2,s*.56);c.fillStyle='#ff4f9a';c.strokeStyle='#fff';c.lineWidth=s*.05;c.beginPath();c.moveTo(0,s*.3);c.bezierCurveTo(-s*.5,-s*.05,-s*.25,-s*.45,0,-s*.18);c.bezierCurveTo(s*.25,-s*.45,s*.5,-s*.05,0,s*.3);c.fill();c.stroke();};
 
 const MASCOT=`<svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="rice" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#eee6f4"/></linearGradient></defs>
@@ -81,6 +70,32 @@ const FILLINGS=[null,'#ff8a65','#e53950','#7cc36a','#ffcf40'],MOODS=['smile','ha
 document.documentElement.style.setProperty('--onigiri',`url("${svgURL(onigiri())}")`);
 document.documentElement.style.setProperty('--onigiri-wow',`url("${svgURL(onigiri({mood:'wow',filling:'#ff8a65'}))}")`);
 
+// Cel shading at the material level: the lights' diffuse contribution is split into two hard tones,
+// environment lighting becomes flat ambient, reflections go, and specular becomes a crisp highlight.
+// Albedo is read from a blurred mip so fine texture noise becomes smooth colour regions.
+class AnimeToonPlugin extends B.MaterialPluginBase{
+  constructor(material,gamma){super(material,'AnimeToon',200,{ANIME_TOON:false},true,true);this.gamma=gamma;}
+  getClassName(){return 'AnimeToonPlugin';}
+  prepareDefines(defines){defines.ANIME_TOON=true;}
+  getUniforms(){return {ubo:[{name:'animeGamma',size:1,type:'float'}],fragment:'#ifdef ANIME_TOON\nuniform float animeGamma;\n#endif'};}
+  bindForSubMesh(ubo){ubo.updateFloat('animeGamma',this.gamma);}
+  getCustomCode(type){if(type!=='fragment')return null;return {
+    CUSTOM_FRAGMENT_UPDATE_ALBEDO:`#if defined(ANIME_TOON) && defined(ALBEDO)
+      vec3 animeSharp=texture2D(albedoSampler,vAlbedoUV).rgb,animeFlat=texture2D(albedoSampler,vAlbedoUV,4.5).rgb;
+      surfaceAlbedo*=pow(clamp(animeFlat/max(animeSharp,vec3(.02)),0.,4.),vec3(animeGamma));
+      #endif`,
+    CUSTOM_FRAGMENT_BEFORE_FINALCOLORCOMPOSITION:`#ifdef ANIME_TOON
+      float animeL=dot(diffuseBase,vec3(.299,.587,.114));
+      finalDiffuse=diffuseBase/max(animeL,1e-4)*mix(.75,1.6,smoothstep(.75,.85,animeL))*surfaceAlbedo;
+      #ifdef REFLECTION
+      finalIrradiance=surfaceAlbedo*.3;finalRadianceScaled=vec3(0.);
+      #endif
+      #ifdef SPECULARTERM
+      finalSpecularScaled=vec3(smoothstep(.1,.13,dot(finalSpecularScaled,vec3(.333)))*.5);
+      #endif
+      #endif`};}
+}
+
 export function installAnime(game){
   const {scene,camera,canvas,engine}=game,stage=document.getElementById('stage');
   document.documentElement.classList.add('anime');
@@ -90,8 +105,8 @@ export function installAnime(game){
   post.onApply=e=>{e.setTexture('depthSampler',depth);e.setFloat2('screenSize',post.width,post.height);e.setFloat('time',fx.time);e.setFloat('aberration',fx.aberration);e.setFloat('speed',fx.speed);e.setFloat('flash',fx.flash);};
   camera.layerMask|=FX_LAYER;
   // Flat, matte materials: drop normal-map detail and gloss so light gives flat tones, not gradients.
-  const flatten=m=>{if(!(m instanceof B.PBRMaterial))return;m.bumpTexture=null;m.metallic=Math.min(m.metallic??0,.15);m.roughness=Math.max(m.roughness??1,.9);m.metallicTexture=null;m.useRoughnessFromMetallicTextureAlpha=false;m.useRoughnessFromMetallicTextureGreen=false;};
-  for(const m of scene.materials)flatten(m);for(const model of game.models.values())for(const m of model.materials)flatten(m);scene.environmentIntensity=.3;
+  const toon=(m,food)=>{if(!(m instanceof B.PBRMaterial)||m.pluginManager?.getPlugin('AnimeToon'))return;m.bumpTexture=null;m.metallicTexture=null;m.metallic=Math.min(m.metallic??0,.1);m.roughness=food?.45:Math.max(m.roughness??1,.8);const t=m.albedoTexture;new AnimeToonPlugin(m,t&&t.gammaSpace&&!t._useSRGBBuffer?2.2:1);};
+  for(const m of scene.materials)toon(m,false);for(const model of game.models.values())for(const m of model.materials)toon(m,true);if(game.softServe)toon(game.softServe.material,true);
   scene.clearColor=new B.Color4(.99,.84,.92,1);
   const sky=scene.materials.find(m=>m.name==='Campus daylight');if(sky){sky.albedoColor=B.Color3.FromHexString('#8fd3ff');sky.emissiveColor=new B.Color3(.45,.7,1);}
   const glow=scene.materials.find(m=>m.name==='Warm fixtures');if(glow)glow.emissiveColor=new B.Color3(1,.7,.9);
@@ -113,10 +128,10 @@ export function installAnime(game){
       friends.push({mesh,base:y+size/2,x,z,phase:k*1.7,hop:0});mesh.position.set(x,y+size/2,z);
     }
   })();
-  function burst(at,{count=45,texture=starTex,size=[.012,.04],power=[.25,.8],colors=[[1,.95,.6],[.6,.95,1]],life=[.4,1],gravity=-.6}={}){
+  function burst(at,{count=45,texture=starTex,size=[.012,.04],power=[.25,.8],colors=[[1,1,1],[1,.9,.95]],life=[.4,1],gravity=-.6}={}){
     const ps=new B.ParticleSystem('Kira kira',count,scene);ps.particleTexture=texture;ps.layerMask=FX_LAYER;ps.emitter=at.clone();ps.createSphereEmitter(.02);
     ps.color1=new B.Color4(...colors[0],1);ps.color2=new B.Color4(...colors[1],1);ps.colorDead=new B.Color4(1,1,1,0);ps.minSize=size[0];ps.maxSize=size[1];ps.minLifeTime=life[0];ps.maxLifeTime=life[1];
-    ps.minEmitPower=power[0];ps.maxEmitPower=power[1];ps.gravity=V(0,gravity,0);ps.minAngularSpeed=-4;ps.maxAngularSpeed=4;ps.blendMode=texture===heartTex?B.ParticleSystem.BLENDMODE_STANDARD:B.ParticleSystem.BLENDMODE_ONEONE;
+    ps.minEmitPower=power[0];ps.maxEmitPower=power[1];ps.gravity=V(0,gravity,0);ps.minAngularSpeed=-4;ps.maxAngularSpeed=4;ps.blendMode=B.ParticleSystem.BLENDMODE_STANDARD;
     ps.emitRate=0;ps.manualEmitCount=count;ps.targetStopDuration=life[1]+.3;ps.disposeOnStop=true;ps.start();
   }
   function impact(strength=1){for(const f of friends)f.hop=Math.max(f.hop,strength);if(calm)return;fx.flash=Math.max(fx.flash,.28*strength);fx.aberration=Math.max(fx.aberration,1.6*strength);fx.punch=Math.max(fx.punch,strength);}
