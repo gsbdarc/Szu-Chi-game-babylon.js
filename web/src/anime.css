@@ -1,0 +1,89 @@
+/* Anime Buffet Arc: manga panels, comic buttons, sparkle everything. Layered over style.css. */
+:root.anime{--ink:#22122a;--pink:#ff5fa2;--cyan:#38d6ff;--yellow:#ffe45c;--violet:#b98cff;--green:#2e5443;color:var(--ink);background:#fff5fb;font-family:"Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif}
+.anime body{background:radial-gradient(circle at 20% 20%,#fff 0 2px,transparent 3px) 0 0/28px 28px,#ffeaf5}
+.anime button{font-weight:700;border-radius:999px;transition:transform .12s,background .15s}
+.anime button:hover:not(:disabled){background:#ffe0f0;transform:translateY(-2px) rotate(-1deg)}
+.anime button:active:not(:disabled){transform:scale(.95)}
+.anime .primary{background:linear-gradient(135deg,var(--pink),#ff9a5c);color:#fff;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--ink);text-shadow:1px 1px 0 var(--ink)}
+.anime .primary:hover:not(:disabled){background:linear-gradient(135deg,#ff78b4,#ffb36e);box-shadow:6px 6px 0 var(--ink)}
+.anime .primary:not(:disabled)::after{content:" ✧";display:inline-block;animation:twinkle 1.2s infinite}
+.anime .soft{background:#e6f9ff;border:2px solid var(--ink)}
+/* Header: sunset gradient with drifting stars. */
+.anime header{background:radial-gradient(circle,#fff 0 1.5px,transparent 2.5px) 0 0/34px 34px,linear-gradient(100deg,#ff5fa2,#b98cff 55%,#38d6ff);border-bottom:4px solid var(--ink);animation:stars 18s linear infinite;color:#fff}
+header .brand{white-space:nowrap}
+.anime .brand{font:900 26px/1 "Hiragino Maru Gothic ProN","Arial Rounded MT Bold",sans-serif;letter-spacing:.04em;text-shadow:3px 3px 0 var(--ink),-1px -1px 0 var(--ink),1px -1px 0 var(--ink),-1px 1px 0 var(--ink)}
+.anime .brand::before{content:"✦ ";color:var(--yellow)}
+.anime .brand small{color:#fff;font-weight:700;letter-spacing:.2em;text-shadow:1px 1px 0 var(--ink)}
+.anime header nav button{color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.anime header nav button:hover:not(:disabled){background:#ffffff33}
+/* Manga panels. */
+.anime .card{background:radial-gradient(circle,#ffd3e8 0 2px,transparent 2.5px) 100% 0/9px 9px no-repeat,#fff;background-size:90px 90px,auto;border:3px solid var(--ink);border-radius:20px;box-shadow:7px 7px 0 var(--ink);animation:panelIn .5s cubic-bezier(.3,1.6,.5,1)}
+.anime .eyebrow{display:inline-block;background:var(--ink);color:var(--yellow);padding:4px 10px;border-radius:999px;letter-spacing:.14em;transform:rotate(-2deg)}
+.anime #dish h1,.anime #plate-summary h2,.anime dialog h2{font-family:inherit;font-weight:900;color:var(--pink);text-shadow:2px 2px 0 var(--ink);-webkit-text-stroke:.5px var(--ink)}
+.anime #dish h1::after{content:" ♡";color:var(--cyan)}
+/* Speech-bubble toast. */
+.anime #toast{background:var(--yellow);color:var(--ink);border:3px solid var(--ink);border-radius:24px;box-shadow:5px 5px 0 var(--ink);font-weight:800}
+.anime #toast.visible{animation:pop .35s cubic-bezier(.3,1.8,.5,1)}
+.anime #toast::after{content:"";position:absolute;left:50%;bottom:-14px;border:10px solid transparent;border-top-color:var(--ink);transform:translateX(-50%)}
+.anime #progress-label{font-weight:800;color:#fff;text-shadow:2px 2px 0 var(--ink)}
+.anime #plate-tools{background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 var(--ink)}
+/* Rainbow progress and a night-sky footer. */
+.anime #progress{background:#2a1838}.anime #progress span{background:repeating-linear-gradient(45deg,#ff5fa2 0 12px,#ffe45c 12px 24px,#38d6ff 24px 36px);animation:stripes 1s linear infinite;background-size:51px 51px}
+.anime footer{background:radial-gradient(circle,#fff8 0 1px,transparent 2px) 0 0/22px 22px,#2a1838;color:#ffeaf5}
+.anime footer .footnote,.anime footer .footnote button{color:#ffd3e8}
+.anime footer .navigation button:not(.primary){background:#fff;border:3px solid var(--ink);box-shadow:3px 3px 0 var(--ink);color:var(--ink)}
+/* Dialog: a manga panel on a speed-line backdrop. */
+.anime dialog{border:4px solid var(--ink);border-radius:26px;box-shadow:10px 10px 0 var(--ink);background:radial-gradient(circle,#ffe0ef 0 2px,transparent 2.5px) 0 0/12px 12px,#fff;animation:panelIn .45s cubic-bezier(.3,1.6,.5,1)}
+.anime dialog::backdrop{background:repeating-conic-gradient(from 0deg at 50% 50%,#ffffff 0 2deg,#ffd6ea 2deg 7deg);backdrop-filter:none;opacity:.92;animation:backdropSpin 40s linear infinite}
+.anime dialog .eyebrow::before{content:"★ "}
+.anime .steps>div{border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink);background:#fff}
+.anime .menu-grid button{border:3px solid var(--ink)!important;border-radius:16px;box-shadow:4px 4px 0 var(--ink);background:#fff}
+.anime .menu-grid img{border-radius:12px}
+/* Loading: NOW LOADING with a spinning star. */
+.anime #loading{background:linear-gradient(160deg,#ff9ec7,#b98cff 60%,#38d6ff);color:#fff}
+.anime #loading h1{font-weight:900;text-shadow:3px 3px 0 var(--ink)}
+.anime #loading h1::after{content:" ☆ NOW LOADING";display:block;font-size:14px;letter-spacing:.3em;text-align:center;animation:twinkle 1s infinite}
+.anime #loading .spinner{border:0;width:60px;height:60px;animation:spin 1s linear infinite}
+.anime #loading .spinner::before{content:"★";font-size:60px;line-height:60px;color:var(--yellow);text-shadow:3px 3px 0 var(--ink)}
+/* Manga SFX text. */
+#anime-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.sfx{position:absolute;transform:translate(-50%,-50%) rotate(var(--r)) scale(0);font:900 calc(46px * var(--s))/1 "Hiragino Maru Gothic ProN","Arial Black",sans-serif;white-space:nowrap;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:5px 5px 0 var(--ink);animation:sfx 1.5s cubic-bezier(.2,1.8,.4,1) forwards;letter-spacing:.02em}
+.sfx.pink{color:var(--pink)}.sfx.cyan{color:var(--cyan)}.sfx.yellow{color:var(--yellow)}.sfx.violet{color:var(--violet)}
+/* Mascot. */
+#mascot{position:absolute;left:22px;bottom:22px;width:112px;z-index:6;pointer-events:none;filter:drop-shadow(4px 5px 0 #22122a55);animation:bob 2.4s ease-in-out infinite}
+#mascot svg{width:112px;height:112px;display:block}
+#mascot .happy{display:none}#mascot.talking.happy .happy,#mascot.talking.fired .happy{display:inline}#mascot.talking.happy .eyes,#mascot.talking.fired .eyes{display:none}
+#mascot .eyes{transform-origin:60px 60px;animation:blink 4s infinite}
+#mascot.bounce svg{animation:boing .5s cubic-bezier(.3,1.9,.5,1)}
+#mascot.sad svg{filter:saturate(.3) brightness(.95)}#mascot.shock svg{animation:shake .4s 2}
+#mascot .bubble{position:absolute;left:118px;bottom:24px;width:max-content;max-width:260px;background:#fff;border:3px solid var(--ink);border-radius:20px;padding:9px 14px;font-weight:800;font-size:14px;box-shadow:4px 4px 0 var(--ink);opacity:0;transform:scale(.6);transform-origin:0 100%;transition:opacity .15s,transform .25s cubic-bezier(.3,1.8,.5,1)}
+#mascot .bubble::before{content:"";position:absolute;left:-16px;bottom:14px;border:8px solid transparent;border-right-color:var(--ink)}
+#mascot.talking .bubble{opacity:1;transform:scale(1)}
+/* Eyecatch between scenes. */
+.eyecatch{position:absolute;inset:0;z-index:7;pointer-events:none;display:flex;align-items:center;justify-content:center;animation:eyecatch 2.3s ease forwards;overflow:hidden}
+.eyecatch .burst{position:absolute;inset:-50%;background:repeating-conic-gradient(#ff5fa2 0 10deg,#ffe45c 10deg 20deg);animation:spin 6s linear infinite}
+.eyecatch .panel{position:relative;background:#fff;border:5px solid var(--ink);border-radius:26px;box-shadow:12px 12px 0 var(--ink);padding:26px 44px;text-align:center;transform:rotate(-4deg)}
+.eyecatch small{display:block;font-weight:900;letter-spacing:.4em;color:var(--cyan);-webkit-text-stroke:1px var(--ink)}
+.eyecatch b{display:block;font:900 clamp(30px,6vw,64px)/1.1 "Hiragino Maru Gothic ProN","Arial Black",sans-serif;color:var(--pink);-webkit-text-stroke:2px var(--ink);text-shadow:5px 5px 0 var(--ink)}
+/* Completion: freeze frame, confetti and a To Be Continued arrow. */
+canvas.freeze{filter:sepia(.55) saturate(1.4) contrast(1.1);transition:filter 1s}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:10}
+.tbc{position:fixed;left:24px;bottom:24px;pointer-events:none;animation:slideIn .6s .8s cubic-bezier(.3,1.5,.5,1) both}
+.tbc span{display:inline-block;background:#4a3a1c;color:#f3e3b0;font:900 italic 22px/1 Georgia,serif;padding:12px 40px 12px 24px;clip-path:polygon(0 0,86% 0,100% 50%,86% 100%,0 100%);border:3px solid #f3e3b0;letter-spacing:.05em}
+@keyframes sfx{0%{transform:translate(-50%,-50%) rotate(var(--r)) scale(0)}18%{transform:translate(-50%,-50%) rotate(var(--r)) scale(1.35)}30%{transform:translate(-50%,-50%) rotate(var(--r)) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-90%) rotate(var(--r)) scale(1.05)}}
+@keyframes twinkle{50%{opacity:.35;transform:scale(.8) rotate(20deg)}}
+@keyframes stars{to{background-position:340px 0,0 0}}
+@keyframes stripes{to{background-position:51px 0}}
+@keyframes panelIn{from{transform:scale(.85) rotate(-2deg);opacity:0}}
+@keyframes pop{from{transform:translateX(-50%) scale(.5)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes backdropSpin{from{transform:scale(2.4) rotate(0)}to{transform:scale(2.4) rotate(360deg)}}
+@keyframes bob{50%{transform:translateY(-6px)}}
+@keyframes boing{30%{transform:scale(1.25,.8)}60%{transform:scale(.9,1.12)}}
+@keyframes shake{25%{transform:translateX(-5px) rotate(-4deg)}75%{transform:translateX(5px) rotate(4deg)}}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
+@keyframes eyecatch{0%{clip-path:circle(0% at 50% 50%)}15%,82%{clip-path:circle(80% at 50% 50%)}100%{clip-path:circle(0% at 50% 50%)}}
+@keyframes slideIn{from{transform:translateX(-120%)}}
+@media(max-width:900px),(max-height:520px){#mascot{width:78px;left:10px;bottom:10px}#mascot svg{width:78px;height:78px}#mascot .bubble{left:84px;bottom:14px}#mascot .bubble{font-size:12px;max-width:180px}}
+@media(max-width:600px) and (orientation:portrait){#mascot{bottom:150px}}
+@media(prefers-reduced-motion:reduce){.anime *,.anime *::before,.anime *::after,dialog::backdrop{animation-duration:.01ms!important;animation-iteration-count:1!important}}

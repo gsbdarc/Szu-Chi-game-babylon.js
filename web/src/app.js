@@ -1,6 +1,7 @@
 import {buildHall,makePlate,softServe,stationX} from './world.js';
 import {ResearchSession,download} from './research.js';
 import {Placement,sampleShape} from './placement.js';
+import {installAnime} from './anime.js';
 const B=BABYLON,V=(x,y,z)=>new B.Vector3(x,y,z),$=id=>document.getElementById(id);
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -43,7 +44,7 @@ class BuffetGame {
     }
     for(const record of this.research.data.portions){const f=this.foods.find(f=>f.id===record.foodId);if(!f)throw new Error('A saved dish is missing from this study menu.');this.createPortion(f,record,false);}
     if(this.settleStacks())this.placement.rebuild(this.portions);
-    this.bind();this.fitCamera();await this.scene.whenReadyAsync();$('loading').hidden=true;
+    this.bind();installAnime(this);this.fitCamera();await this.scene.whenReadyAsync();$('loading').hidden=true;
     if(this.finished){this.started=true;this.plate.setEnabled(true);await this.moveView(true,false);this.showCompletion();}else if(this.debugStation()!==null)this.begin(this.debugStation());else this.welcome();this.refresh();
     // Read-only diagnostics for repeatable canvas and placement checks.
     Object.defineProperty(window,'buffet',{value:{snapshot:()=>({station:this.station,started:this.started,moving:this.moving,pouring:!!this.pouring,plateView:this.plateView,finished:this.finished,selected:this.selected?.portionId,session:structuredClone(this.research.data),saved:this.research.saved,saveError:this.research.error,engine:'Babylon.js '+B.Engine.Version,meshes:this.scene.meshes.length,fps:this.engine.getFps(),portions:this.portions.map(p=>({id:p.portionId,food:p.foodId,x:p.x,y:p.y,z:p.z,extent:Math.max(...p.shape.map(s=>Math.hypot(p.x+s.ix*.003,p.z+s.iz*.003)))}))}),point:(name,index=0)=>this.project(name==='dish'?V(stationX(this.station),.97,0):name==='portion'&&this.portions[index]?this.portions[index].root.getAbsolutePosition().add(V(0,.025,0)):this.plate.getAbsolutePosition().add(V(0,.02,0)))}});
