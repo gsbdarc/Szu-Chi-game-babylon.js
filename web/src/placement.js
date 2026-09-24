@@ -31,6 +31,8 @@ export class Placement {
     for(const v of shape)height=Math.max(height,this.grid[(v.iz+dz+MID)*N+v.ix+dx+MID]-v.low);
     return height+.0002;
   }
+  // Like heightAt, but tolerates positions partly off the grid (used to plan flight paths).
+  clearAt(shape,x,z){const dx=Math.round(x/CELL),dz=Math.round(z/CELL);let height=-Infinity;for(const v of shape){const ix=v.ix+dx+MID,iz=v.iz+dz+MID;if(ix>=0&&ix<N&&iz>=0&&iz<N)height=Math.max(height,this.grid[iz*N+ix]-v.low);}return height;}
   fit(shape,preferred){
     let best=null,score=Infinity;
     for(let z=-44;z<=44;z+=2)for(let x=-44;x<=44;x+=2){

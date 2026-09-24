@@ -77,14 +77,14 @@ export function buildHall(scene, stations=15) {
     const part=(mesh,mat,p)=>{mesh.material=mat;mesh.position.copyFrom(p);mesh.receiveShadows=true;mesh.isPickable=true;mesh.metadata={station:i};parts.push(mesh);return mesh;};
     const block=(p,s,m)=>part(B.MeshBuilder.CreateBox('Soft serve machine',{width:s[0],height:s[1],depth:s[2]},scene),m,V(...p));
     const rod=(p,h,r,m,n=16)=>part(B.MeshBuilder.CreateCylinder('Soft serve fitting',{height:h,diameter:r*2,tessellation:n},scene),m,V(...p));
-    block([x,T+.27,.25],[.38,.54,.4],brushed);block([x,T+.546,.25],[.39,.012,.41],steel);for(const s of [-1,1])rod([x+s*.085,T+.577,.28],.05,.07,charcoal,24);
-    block([x,T+.2,.047],[.3,.26,.006],charcoal);label(name.toUpperCase(),[x,T+.2,.042],.28,.055);
+    block([x,T+.27,.28],[.38,.54,.4],brushed);block([x,T+.546,.28],[.39,.012,.41],steel);for(const s of [-1,1])rod([x+s*.085,T+.577,.31],.05,.07,charcoal,24);
+    block([x,T+.1,.077],[.3,.16,.006],charcoal);label(name.toUpperCase(),[x,T+.13,.072],.28,.055);for(const s of [-1,1])block([x+s*.1,T+.065,.073],[.016,.016,.004],s<0?glow:enamel);
     // Dispensing head overhangs the counter so the plate can slide beneath the star nozzle.
-    block([x,1.33,-.115],[.26,.13,.33],steel);rod([x,1.245,-.22],.04,.022,steel);rod([x,1.215,-.22],.02,.014,dark,8);block([x,1.401,-.262],[.06,.012,.03],dark);
-    const lever=new B.TransformNode('Soft serve lever',scene);lever.position=V(x,1.407,-.265);
+    block([x,1.265,-.1],[.26,.13,.36],steel);rod([x,1.18,-.22],.04,.022,steel);rod([x,1.15,-.22],.02,.014,dark,8);block([x,1.336,-.262],[.06,.012,.03],dark);
+    const lever=new B.TransformNode('Soft serve lever',scene);lever.position=V(x,1.342,-.265);
     const arm=rod([0,.064,-.012],.13,.009,steel);arm.rotation.x=-.18;arm.parent=lever;
     const knob=part(B.MeshBuilder.CreateSphere('Soft serve lever knob',{diameter:.038,segments:12},scene),enamel,V(0,.128,-.023));knob.parent=lever;
-    return {lever,nozzle:V(x,1.205,-.22),parts};
+    return {lever,nozzle:V(x,1.14,-.22),headBottom:1.2,parts};
   }
   return {label,dispenser};
 }
@@ -95,14 +95,82 @@ export function makePlate(scene) {
   const m=new B.PBRMaterial('Glazed white porcelain',scene);m.albedoColor=new B.Color3(.96,.96,.93);m.metallic=0;m.roughness=.22;plate.material=m;plate.receiveShadows=true;plate.isPickable=true;plate.metadata={plate:true};return plate;
 }
 
-// Vanilla soft-serve swirl: a tapering conical helix on a soft base, origin at its bottom.
-export function makeSoftServe(scene) {
-  const n=96,turns=3.2,path=[];
-  for(let i=0;i<=n;i++){const t=i/n,a=t*turns*2*Math.PI,r=.03*(1-t)**.85;path.push(V(Math.cos(a)*r,.014+t*.05,Math.sin(a)*r));}
-  const tube=B.MeshBuilder.CreateTube('swirl',{path,radiusFunction:i=>.0025+.0145*(1-i/n*.72),tessellation:18,cap:B.Mesh.CAP_ALL},scene);
-  const base=B.MeshBuilder.CreateSphere('swirl base',{diameter:1,segments:16},scene);base.scaling.copyFromFloats(.096,.03,.096);base.position.y=.015;
-  const tip=B.MeshBuilder.CreateSphere('swirl tip',{diameter:1,segments:10},scene);tip.scaling.copyFromFloats(.012,.024,.012);tip.position.copyFrom(path[n].add(V(.002,.006,0)));tip.rotation.z=-.35;
-  const swirl=B.Mesh.MergeMeshes([tube,base,tip],true,true);swirl.name='Vanilla soft serve';
-  const m=new B.PBRMaterial('Vanilla soft serve',scene);m.albedoColor=B.Color3.FromHexString('#f7e2b4');m.metallic=0;m.roughness=.42;swirl.material=m;
-  swirl.setEnabled(false);return swirl;
+// Soft serve as an extruded, star-ridged rope of constant cross-section. Only the last few
+// percent taper, where the rope is stretched as the plate pulls away, leaving a peak.
+const SWIRL_POINTS=180,SWIRL_SIDES=32,SWIRL_SETTLE=.96,SWIRL_ROPE=.0128,SWIRL_LAYERS=3,SWIRL_CELL=.003;
+export function softServe(scene) {
+  const material=new B.PBRMaterial('Vanilla soft serve',scene);material.albedoColor=B.Color3.FromHexString('#f7e2b4');material.metallic=0;material.roughness=.42;
+  const T=SWIRL_SIDES,rings=SWIRL_POINTS+2,layers=[];
+  function rope(name,points,radii,endAngle){
+    const n=points.length,path=new B.Path3D(points),normals=path.getNormals(),binormals=path.getBinormals();
+    // A fixed nozzle extrudes at constant flow and cross-section, so the head advances at constant
+    // arc-length speed; progress is parameterised by length along the rope.
+    const length=[0];for(let i=1;i<n;i++)length.push(length[i-1]+B.Vector3.Distance(points[i],points[i-1]));
+    const total=length.at(-1);
+    function at(q){const i=Math.min(n-2,Math.floor(q)),f=q-i;return {point:B.Vector3.Lerp(points[i],points[i+1],f),radius:radii[i]+(radii[i+1]-radii[i])*f,index:i};}
+    function progress(t){const v=Math.min(1,Math.max(0,t))*total;let i=0;while(i<n-2&&length[i+1]<v)i++;return Math.min(n-1,i+(v-length[i])/Math.max(1e-9,length[i+1]-length[i]));}
+    // Ring 0 and the last ring are zero-radius caps. Rings past the extrusion head collapse onto it.
+    function fill(positions,q){
+      const head=at(q),qi=Math.floor(q);let o=0;
+      for(let k=0;k<rings;k++){
+        const i=k-1;let c=head.point,r=0,f=head.index;
+        if(k===0){c=points[0];f=0;}
+        else if(k===rings-1){if(q>=n-1){c=points.at(-1);f=n-1;}}
+        else if(i<=qi){c=points[i];r=radii[i];f=i;}
+        else if(i===qi+1)r=head.radius;
+        const a=normals[f],b=binormals[f];
+        for(let j=0;j<=T;j++){const phi=j/T*2*Math.PI,ridge=r*(1+.09*Math.cos(8*phi)),cs=Math.cos(phi),sn=Math.sin(phi);
+          positions[o++]=c.x+(a.x*cs+b.x*sn)*ridge;positions[o++]=c.y+(a.y*cs+b.y*sn)*ridge*.85;positions[o++]=c.z+(a.z*cs+b.z*sn)*ridge;}
+      }
+      return positions;
+    }
+    const indices=[];for(let k=0;k<rings-1;k++)for(let j=0;j<T;j++){const a=k*(T+1)+j,c=a+T+1;indices.push(a,c,a+1,a+1,c,c+1);}
+    const positions=fill(new Float32Array(rings*(T+1)*3),n-1),vertexNormals=[];B.VertexData.ComputeNormals(positions,indices,vertexNormals);
+    // Winding depends on Path3D's frame handedness; flip if normals point into the rope.
+    const v=3*(T+1)*3,c=points[2];
+    if((positions[v]-c.x)*vertexNormals[v]+(positions[v+1]-c.y)*vertexNormals[v+1]+(positions[v+2]-c.z)*vertexNormals[v+2]<0){for(let t=0;t<indices.length;t+=3)[indices[t+1],indices[t+2]]=[indices[t+2],indices[t+1]];vertexNormals.length=0;B.VertexData.ComputeNormals(positions,indices,vertexNormals);}
+    const data=new B.VertexData();data.positions=positions;data.indices=indices;data.normals=vertexNormals;
+    const template=new B.Mesh(name,scene);data.applyToMesh(template,false);template.material=material;template.scaling.y=SWIRL_SETTLE;template.setEnabled(false);
+    function extrusion(){
+      const mesh=new B.Mesh(name+' extrusion',scene),live=fill(new Float32Array(positions.length),0),normals=new Float32Array(positions.length),start=new B.VertexData();
+      start.positions=live;start.indices=indices;start.normals=normals;start.applyToMesh(mesh,true);mesh.material=material;mesh.alwaysSelectAsActiveMesh=true;
+      return {mesh,set(q){fill(live,q);mesh.updateVerticesData(B.VertexBuffer.PositionKind,live);normals.fill(0);B.VertexData.ComputeNormals(live,indices,normals);mesh.updateVerticesData(B.VertexBuffer.NormalKind,normals);}};
+    }
+    let top=0;for(let i=1;i<positions.length;i+=3)top=Math.max(top,positions[i]);
+    return {template,extrusion,at,progress,end:n-1,length:total,top,positions,endAngle};
+  }
+  // Layer 0: a flat spiral fills the base, then coils climb and narrow, each resting on the one below.
+  function base(){
+    const points=[],radii=[],turns=4.1,flat=1.15,r0=.031,rt=SWIRL_ROPE;
+    for(let i=0;i<SWIRL_POINTS;i++){
+      const u=i/(SWIRL_POINTS-1)*turns,a=u*2*Math.PI;let r,y,w=rt;
+      if(u<flat){r=.004+(r0-.004)*u/flat;y=rt*.8;}
+      else{const s=(u-flat)/(turns-flat),end=Math.min(1,(1-s)/.08);r=r0*(1-s)**.8;w=rt*(.25+.75*Math.sqrt(end));y=rt*.8+.056*s**.85+(1-end)*.006;}
+      points.push(V(Math.cos(a)*r,y,Math.sin(a)*r));radii.push(w);
+    }
+    return rope('Vanilla soft serve',points,radii,turns*2*Math.PI);
+  }
+  // Upper layers continue the spiral where the layer below ended, starting wide enough to wrap the
+  // shoulders of the mound. Each layer's rope is as long as the base's, so every pour is the same
+  // amount. Each rope point comes to rest on the highest thing beneath its footprint: the layers
+  // below, then its own earlier coils once the head has moved on. The result is a deterministic
+  // shape for each layer in the portion's frame.
+  function draped(k){
+    const height=new Map(),key=(x,z)=>x*1000+z,C=SWIRL_CELL,rt=SWIRL_ROPE;
+    for(let l=0;l<k;l++){const p=layers[l].positions;for(let i=0;i<p.length;i+=3){const id=key(Math.round(p[i]/C),Math.round(p[i+2]/C));height.set(id,Math.max(height.get(id)??0,p[i+1]));}}
+    const footprint=(x,z,w,fn)=>{const r=Math.ceil(w/C);for(let dz=-r;dz<=r;dz++)for(let dx=-r;dx<=r;dx++){const cx=Math.round(x/C)+dx,cz=Math.round(z/C)+dz,d=Math.hypot(cx*C-x,cz*C-z);if(d<w)fn(key(cx,cz),.85*Math.sqrt(w*w-d*d));}};
+    const r0=.042-.005*(k-1),turns=Math.max(1.5,layers[0].length*1.8/(2*Math.PI*r0)),start=layers[k-1].endAngle,points=[],radii=[],pending=[];let arc=0,last=null;
+    for(let i=0;i<SWIRL_POINTS;i++){
+      const s=i/(SWIRL_POINTS-1),a=start+s*turns*2*Math.PI,r=r0*(1-s)**.8,end=Math.min(1,(1-s)/.1),w=rt*(.25+.75*Math.sqrt(end)),x=Math.cos(a)*r,z=Math.sin(a)*r;
+      if(last)arc+=Math.hypot(x-last.x,z-last.z);
+      while(pending.length&&arc-pending[0].arc>2.2*rt){const q=pending.shift();footprint(q.x,q.z,q.w,(id,h)=>height.set(id,Math.max(height.get(id)??0,q.y+h)));}
+      let y=0;footprint(x,z,w,(id,h)=>y=Math.max(y,(height.get(id)??0)+h));
+      y-=.12*w;if(last)y=Math.max(y,last.y-.003);y+=(1-end)*.006;   // soft rope nestles slightly into what it rests on
+      last={x,z,y};pending.push({x,z,y,w,arc});points.push(V(x,y,z));radii.push(w);
+    }
+    return rope('Vanilla soft serve layer '+k,points,radii,start+turns*2*Math.PI);
+  }
+  function layer(k){for(let l=layers.length;l<=k;l++)layers.push(l?draped(l):base());return layers[k];}
+  layer(0);
+  return {material,layer,layers:SWIRL_LAYERS,settle:SWIRL_SETTLE};
 }
