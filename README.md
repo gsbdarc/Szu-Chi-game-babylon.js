@@ -20,7 +20,7 @@ The same URL restores the previous session in that browser, including unfinished
 
 ## Included
 
-The original 15 foods and textures, converted from the Unity FBX files to GLB at their original scale; a 29 cm porcelain plate; the furnished cafeteria, kitchen, buffet counters, dining furniture and distant diners; guided camera transitions; desktop and touch controls; menus and instructions; sound; configurable conditions; SQLite storage; CSV/JSON exports; screenshot logging; offline queues; refresh recovery; and the Qualtrics/Prolific identity and iframe bridge.
+The original 15 foods and textures, converted from the Unity FBX files to GLB at their original scale; a 29 cm porcelain plate; the furnished cafeteria, kitchen, buffet counters, dining furniture and distant diners; guided camera transitions; desktop and touch controls; menus and instructions; openly licensed cafeteria music and recorded room ambience on independent, condition-controlled buses; configurable conditions; SQLite storage; CSV/JSON exports; screenshot logging; offline queues; refresh recovery; and the Qualtrics/Prolific identity and iframe bridge.
 
 Placement uses the actual food mesh surfaces on a 3 mm grid to find supported positions. Serving is animated; portions rest at their assigned positions. This replaces Unity rigidbody simulation with the assisted placement permitted by the ask list.
 
@@ -48,7 +48,7 @@ The original food reference and final study assignments are unresolved in the re
 
 ## Edit and verify
 
-`web/src/` contains ordinary JavaScript modules and CSS. `web/assets/menu.json` is the food catalog. `study/conditions.json` controls study conditions. `web/assets/food/` contains the editable GLB models. Babylon.js **9.11.0**, its GLTF loader, and its environment map are bundled under `web/vendor/`.
+`web/src/` contains ordinary JavaScript modules and CSS. `web/assets/menu.json` is the food catalog. `web/assets/audio/` holds the looping music and ambience beds with their licence manifest, rebuilt by `tools/build_audio.py`. `study/conditions.json` controls study conditions. `web/assets/food/` contains the editable GLB models. Babylon.js **9.11.0**, its GLTF loader, and its environment map are bundled under `web/vendor/`.
 
 ```sh
 python3 -m unittest discover -s server -p 'test_server.py'

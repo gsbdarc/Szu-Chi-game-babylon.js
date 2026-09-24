@@ -91,6 +91,24 @@
       "maxScaleDeviationMeters": 3.9999999999901226e-06
     }
   ],
+  "audio": [
+    {
+      "id": "cafeteria-music",
+      "role": "music",
+      "license": "CC BY 3.0",
+      "seconds": 305.62,
+      "bytes": 3725595,
+      "sha256": "289c8065d67250ec059c62d89fbd1bd4be5f9bc3bfb43b704b261fd89664b2f8"
+    },
+    {
+      "id": "cafeteria-ambience",
+      "role": "ambience",
+      "license": "CC0 1.0",
+      "seconds": 300.0,
+      "bytes": 2446501,
+      "sha256": "158a6788a374e24c649abc10a33ccc883eddd74eb0876fb0b128da0c42da4120"
+    }
+  ],
   "vendor": {
     "environment.env": "ca3e30921265d084d46c62c5220217d99296c0c3eacaeb40ca15f7534dfdd8bc",
     "license.md": "9362ea9ea17cb221a20cbbd63f404710834cc273d2a9a7b60314fd68ab702cd6",

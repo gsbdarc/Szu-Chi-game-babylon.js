@@ -1,6 +1,7 @@
 // Sample actual food triangle surfaces on a 3 mm grid. Fitting one portion at a time
 // uses its bottom surface against the plate/meal heightfield, preventing penetration.
-const B=BABYLON, CELL=.003, N=101, MID=50, R=.143;
+const B=BABYLON, N=101, MID=50, R=.143;
+export const CELL=.003;
 function triangle(map,a,b,c){
   const minX=Math.floor(Math.min(a.x,b.x,c.x)/CELL),maxX=Math.ceil(Math.max(a.x,b.x,c.x)/CELL),minZ=Math.floor(Math.min(a.z,b.z,c.z)/CELL),maxZ=Math.ceil(Math.max(a.z,b.z,c.z)/CELL);
   const det=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);if(Math.abs(det)<1e-12)return;
@@ -10,8 +11,8 @@ function triangle(map,a,b,c){
     if(old){old.low=Math.min(old.low,y);old.high=Math.max(old.high,y);}else map.set(key,{ix,iz,low:y,high:y});
   }
 }
-export function sampleShape(root,angle){
-  root.computeWorldMatrix(true);const rot=B.Matrix.RotationY(angle),base=B.Matrix.Invert(root.getWorldMatrix());const map=new Map();
+export function sampleShape(root,rotation){
+  root.computeWorldMatrix(true);const rot=B.Matrix.RotationYawPitchRoll(rotation.y,rotation.x,rotation.z),base=B.Matrix.Invert(root.getWorldMatrix());const map=new Map();
   for(const mesh of root.getChildMeshes()){
     const positions=mesh.getVerticesData(B.VertexBuffer.PositionKind),indices=mesh.getIndices();if(!positions||!indices)continue;
     const matrix=mesh.computeWorldMatrix(true).multiply(base).multiply(rot),vertices=[];

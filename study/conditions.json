@@ -1,5 +1,7 @@
 {
-  "default": {"screenshotsEnabled": true, "soundEnabled": true, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
-  "no_screenshot": {"screenshotsEnabled": false, "soundEnabled": true, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
-  "quiet": {"screenshotsEnabled": true, "soundEnabled": false, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []}
+  "default":       {"screenshotsEnabled": true,  "soundEnabled": true,  "musicEnabled": true,  "musicVolume": 0.35, "ambienceEnabled": true,  "ambienceVolume": 0.5, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
+  "no_screenshot": {"screenshotsEnabled": false, "soundEnabled": true,  "musicEnabled": true,  "musicVolume": 0.35, "ambienceEnabled": true,  "ambienceVolume": 0.5, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
+  "no_music":      {"screenshotsEnabled": true,  "soundEnabled": true,  "musicEnabled": false, "musicVolume": 0,    "ambienceEnabled": true,  "ambienceVolume": 0.5, "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
+  "music_only":    {"screenshotsEnabled": true,  "soundEnabled": true,  "musicEnabled": true,  "musicVolume": 0.35, "ambienceEnabled": false, "ambienceVolume": 0,   "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []},
+  "quiet":         {"screenshotsEnabled": true,  "soundEnabled": false, "musicEnabled": false, "musicVolume": 0,    "ambienceEnabled": false, "ambienceVolume": 0,   "allowRemoval": true, "maxPortions": 40, "introSeconds": 4, "foodOrder": []}
 }
