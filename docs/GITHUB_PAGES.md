@@ -2,8 +2,10 @@
 
 Repository: https://github.com/gsbdarc/Szu-Chi-game-babylon.js
 
-Expected site address after Pages is enabled and deployment succeeds:
-https://gsbdarc.github.io/Szu-Chi-game-babylon.js/
+Live game: [Play The Common Table](https://gsbdarc.github.io/Szu-Chi-game-babylon.js/)
+
+The site is hosted by GitHub and works without running a server on your computer.
+The localhost address below is only for developers testing a build locally.
 
 ## What the hosted preview saves
 

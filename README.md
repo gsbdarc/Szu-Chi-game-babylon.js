@@ -2,17 +2,13 @@
 
 A playable recreation of the Unity game in `../Asta_test`. The browser runs Babylon.js directly: no Unity runtime, build step, npm installation, or external CDN is needed.
 
-## Play
+## Play online
+
+**[Play The Common Table](https://gsbdarc.github.io/Szu-Chi-game-babylon.js/)**
+
+GitHub hosts this public website. Open it in a modern WebGL browser on a computer or phone; no local server or installation is required. The website remains available when the developer's computer is off.
 
 The GitHub Pages build is a standalone preview with the same foods and controls. It saves meals and photographs in the player's browser and offers downloads. It does **not** upload research records or send survey completion messages. See [GitHub Pages deployment](docs/GITHUB_PAGES.md).
-
-For the full research version, run:
-
-```sh
-python3 server/buffet_server.py
-```
-
-Open **http://127.0.0.1:8766**. Requires Python 3.10+ and a modern WebGL browser. Each participant uses their own browser session; there is no shared multiplayer state.
 
 - Browse with the dish arrows or keyboard arrows.
 - Click/tap the current dish, use **Add one portion**, press Space, or drag the dish to your plate.
@@ -20,7 +16,7 @@ Open **http://127.0.0.1:8766**. Requires Python 3.10+ and a modern WebGL browser
 - **Photograph** saves a 1024×1024 plate image and offers a PNG download.
 - **Review meal → Finish meal** records completion. Check the saving message before closing.
 
-The same URL restores the previous session in that browser, including unfinished portions. To start a distinct visit, open `http://127.0.0.1:8766/?SESSION_ID=my-next-preview` with a new identifier.
+The same URL restores the previous session in that browser, including unfinished portions. After finishing, choose **Start a new meal** to play again. Each player has their own browser session; there is no shared multiplayer state.
 
 ## Included
 
@@ -28,7 +24,19 @@ The original 15 foods and textures, converted from the Unity FBX files to GLB at
 
 Placement uses the actual food mesh surfaces on a 3 mm grid to find supported positions. Serving is animated; portions rest at their assigned positions. This replaces Unity rigidbody simulation with the assisted placement permitted by the ask list.
 
-## Research tools
+## Run the research version locally
+
+For development or the full research version, run this command from the repository directory. Requires Python 3.10+.
+
+```sh
+python3 server/buffet_server.py
+```
+
+Then open **http://127.0.0.1:8766** on that computer. `127.0.0.1` and `localhost` refer to your own computer. These local addresses work only while the Python server is running there. To start another local session, append `?SESSION_ID=my-next-preview` with a new identifier.
+
+### Local research tools
+
+The following addresses belong to the local Python server:
 
 - [Study settings](http://127.0.0.1:8766/researcher)
 - [Survey handoff sandbox](http://127.0.0.1:8766/study/embed-sandbox.html)
