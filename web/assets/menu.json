@@ -152,6 +152,18 @@
       "radius": 0.034,
       "mass": 0.035,
       "dessert": true
+    },
+    {
+      "id": "soft_serve",
+      "name": "Vanilla soft serve",
+      "category": "FRESH & SWEET",
+      "description": "Creamy vanilla soft serve, swirled straight from the machine onto your plate.",
+      "portionLabel": "1 swirl",
+      "ingredients": "Milk, cream, sugar, vanilla. Contains milk.",
+      "radius": 0.046,
+      "mass": 0.09,
+      "dessert": true,
+      "dispenser": true
     }
   ]
 }

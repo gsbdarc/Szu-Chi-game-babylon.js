@@ -6,6 +6,8 @@ menu=json.loads((ROOT/'web/assets/menu.json').read_text())['foods']
 manifest=json.loads((ROOT/'web/assets/food/manifest.json').read_text())
 rows=[]
 for food in menu:
+    assert (ROOT/'web/assets/previews'/f"{food['id']}.png").is_file()
+    if food.get('dispenser'):continue  # procedural soft serve has no GLB
     path=ROOT/'web/assets/food'/f"{food['id']}.glb"
     data=path.read_bytes();magic,version,size=struct.unpack('<4sII',data[:12])
     assert magic==b'glTF' and version==2 and size==len(data)

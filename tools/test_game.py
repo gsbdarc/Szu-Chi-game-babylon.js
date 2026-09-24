@@ -13,12 +13,12 @@ BASE='http://127.0.0.1:8767'
 REPORT={'cases':{},'errors':[]}
 
 def snapshot(page): return page.evaluate('window.buffet.snapshot()')
-def ready(page): page.wait_for_function('window.buffet && !window.buffet.snapshot().moving',timeout=90000)
+def ready(page): page.wait_for_function('window.buffet && !window.buffet.snapshot().moving && !window.buffet.snapshot().pouring',timeout=90000)
 def saved(page): page.wait_for_function('window.buffet.snapshot().saved',timeout=45000)
 def start(page,url='/?PROLIFIC_PID=QA-desktop'):
     page.goto(BASE+url);ready(page)
     page.get_by_role('button',name='Explore the buffet').click();ready(page)
-def add(page): page.locator('#add').click();page.wait_for_timeout(480)
+def add(page): page.locator('#add').click();page.wait_for_timeout(480);ready(page)
 def next_dish(page): page.locator('#next').click();ready(page)
 def shot(page,name):page.screenshot(path=str(OUT/(name+'.png')))
 def exports(): return json.load(urllib.request.build_opener(urllib.request.ProxyHandler({})).open(BASE+'/api/export.json'))['sessions']
@@ -49,13 +49,13 @@ with tempfile.TemporaryDirectory(prefix='buffet-babylon-test-') as tmp:
             # Dropping outside the plate is cancelled.
             page.mouse.move(a['x'],a['y']);page.mouse.down();page.mouse.move(700,110,steps=8);page.mouse.up()
             assert len(snapshot(page)['portions'])==2
-            for i in range(1,15):
+            for i in range(1,16):
                 next_dish(page);add(page)
                 assert snapshot(page)['station']==i
-            state=snapshot(page);assert len(state['portions'])==16
-            assert len({p['food'] for p in state['portions']})==15
+            state=snapshot(page);assert len(state['portions'])==17
+            assert len({p['food'] for p in state['portions']})==16
             assert max(p['extent'] for p in state['portions'])<=.14301
-            assert len({p['id'] for p in state['portions']})==16
+            assert len({p['id'] for p in state['portions']})==17
             shot(page,'all-foods-served')
             page.locator('#view').click();ready(page);shot(page,'desktop-plate')
             # Select and move a visible top portion, then remove it independently.
@@ -64,7 +64,7 @@ with tempfile.TemporaryDirectory(prefix='buffet-babylon-test-') as tmp:
             selected=state['selected'];p=page.evaluate("window.buffet.point('portion',15)");q=page.evaluate("window.buffet.point('plate')")
             page.mouse.move(p['x'],p['y']);page.mouse.down();page.mouse.move(q['x']+35,q['y']+25,steps=10);page.mouse.up()
             assert any(e['eventType']=='portion_moved' for e in snapshot(page)['session']['events'])
-            page.locator('#remove').click();assert len(snapshot(page)['portions'])==15
+            page.locator('#remove').click();assert len(snapshot(page)['portions'])==16
             assert selected not in [p['id'] for p in snapshot(page)['portions']]
             # Refresh recovery preserves IDs, counts and positions, with no duplicate additions.
             saved(page);before=snapshot(page)['session'];page.reload();ready(page)
@@ -81,7 +81,7 @@ with tempfile.TemporaryDirectory(prefix='buffet-babylon-test-') as tmp:
             page.locator('#review').click();page.get_by_role('button',name='Finish meal',exact=True).click()
             page.get_by_role('heading',name='Thank you for choosing a meal').wait_for(timeout=60000);saved(page)
             final=snapshot(page)['session'];record=next(r for r in exports() if r['sessionId']==final['sessionId']);assert record['completed'];assert record['portions']==final['portions'];assert record['revision']==final['revision'];assert len(record['screenshots'])>=1
-            shot(page,'desktop-complete');REPORT['cases']['desktop']={'foods':15,'selected':len(final['portions']),'screenshots':len(record['screenshots']),'refreshPreserved':True,'counts':dict(Counter(p['foodId'] for p in final['portions'])),'fps':snapshot(page)['fps']}
+            shot(page,'desktop-complete');REPORT['cases']['desktop']={'foods':16,'selected':len(final['portions']),'screenshots':len(record['screenshots']),'refreshPreserved':True,'counts':dict(Counter(p['foodId'] for p in final['portions'])),'fps':snapshot(page)['fps']}
             print('PASS desktop',flush=True)
             # Conditions prevent forbidden actions and enforce configured order/limits.
             restricted=browser.new_page(viewport={'width':1280,'height':800});check_errors(restricted);start(restricted,'/?condition=restricted&PROLIFIC_PID=QA-restricted')
