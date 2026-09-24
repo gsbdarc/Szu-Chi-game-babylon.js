@@ -1,0 +1,15 @@
+{
+  "testedAt": "2026-09-24T23:57:07.319635+00:00",
+  "frames": 165,
+  "minimumVertexY": 0.009206160131181917,
+  "maxBendMeters": 0.0015411180520631864,
+  "contactBeforePooling": true,
+  "independentGeometry": true,
+  "drag": true,
+  "reload": true,
+  "photographSettlesMotion": true,
+  "capacity": 40,
+  "cleanup": true,
+  "fpsAtCapacity": 59.999999999999865,
+  "errors": []
+}

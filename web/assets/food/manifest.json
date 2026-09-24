@@ -2,12 +2,14 @@
   {
     "id": "chicken_parmesan",
     "bounds": [
-      0.09792,
-      0.030737,
-      0.065965
+      0.09792000055,
+      0.01888675615,
+      0.06596499681
     ],
-    "source": "/Users/jeffott/Asta_test/Assets/Buffet/Food/Resources/Food/chicken_parmesan.fbx",
-    "bytes": 5030148
+    "source": "source/chicken_parmesan/chicken-parmesan-editable.blend",
+    "bytes": 14056164,
+    "revision": "chicken-realism-v2",
+    "metrics": "source/chicken_parmesan/chicken-metrics.json"
   },
   {
     "id": "pizza",

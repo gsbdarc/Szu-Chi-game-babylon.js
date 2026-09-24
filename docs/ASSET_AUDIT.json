@@ -2,90 +2,105 @@
   "foods": [
     {
       "id": "chicken_parmesan",
+      "revision": "chicken-realism-v2",
       "embeddedImages": 3,
-      "bytes": 5030148,
-      "maxScaleDeviationMeters": 4.999999999991123e-06
+      "bytes": 14056164,
+      "maxScaleDeviationMeters": 0.0
     },
     {
       "id": "pizza",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 2431612,
       "maxScaleDeviationMeters": 2.999999999999531e-06
     },
     {
       "id": "burger",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3971224,
       "maxScaleDeviationMeters": 3.0000000000030003e-06
     },
     {
       "id": "salmon",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3784588,
       "maxScaleDeviationMeters": 1.000000000001e-06
     },
     {
       "id": "beef_skewer",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 2907188,
       "maxScaleDeviationMeters": 3.9999999999970615e-06
     },
     {
       "id": "rice",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3679840,
       "maxScaleDeviationMeters": 1.9999999999985307e-06
     },
     {
       "id": "pasta",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3030156,
       "maxScaleDeviationMeters": 3.9999999999901226e-06
     },
     {
       "id": "broccoli",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3787000,
       "maxScaleDeviationMeters": 3.0000000000030003e-06
     },
     {
       "id": "roasted_carrots",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3367976,
       "maxScaleDeviationMeters": 3.0000000000030003e-06
     },
     {
       "id": "mashed_potatoes",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 2713604,
       "maxScaleDeviationMeters": 2.000000000002e-06
     },
     {
       "id": "kale_salad",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3333968,
       "maxScaleDeviationMeters": 3.0000000000030003e-06
     },
     {
       "id": "bread_roll",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 2922148,
       "maxScaleDeviationMeters": 4.000000000004e-06
     },
     {
       "id": "fruit_salad",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3594204,
       "maxScaleDeviationMeters": 2.000000000002e-06
     },
     {
       "id": "chocolate_cake",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 4072824,
       "maxScaleDeviationMeters": 5.999999999992123e-06
     },
     {
       "id": "cookie",
+      "revision": "original",
       "embeddedImages": 3,
       "bytes": 3004392,
       "maxScaleDeviationMeters": 3.9999999999901226e-06

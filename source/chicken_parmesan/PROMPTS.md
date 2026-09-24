@@ -1,0 +1,17 @@
+# Generated texture provenance
+
+Generated September 24, 2026 using the built-in `image_gen.imagegen` tool. These
+are new synthetic images, not edits of a photograph. The original outputs are
+copied into this folder and baked by Blender into the model's maps.
+
+## breading-color.png
+
+Use case: photorealistic-natural. Asset type: physically based 3D food base-color texture. Create one square, full-frame macro texture of the golden breaded surface of freshly pan-fried chicken parmesan, photographed absolutely straight down with orthographic framing, as if the frame crops a 5 cm square of crust. Real irregular panko and fine breadcrumbs fused into the crust, small crisp flakes, tiny cracks, varied honey-gold toasted peaks and amber brown crevices, sparse dark toasted crumbs, very subtle oil saturation. Natural edible texture with variation at several scales; no uniform noise, no pebbles, no large bread chunks. FLAT diffuse cross-polarized illumination, neutral white balance, no directional shadows, no specular reflections, no ambient shadows, no depth of field. Edge-to-edge surface texture, no visible edge or outline of chicken, no plate, no sauce, no cheese, no herbs, no surrounding background, no lettering. High detail, high resolution, seamless-looking natural surface. This image will be mapped onto an actual 3D cutlet; it is a texture map, not a rendered dish.
+
+## cheese-color.png
+
+Use case: photorealistic-natural. Asset type: base-color texture for a 3D chicken parmesan model. Generate one square full-frame orthographic straight-down macro photograph of oven-melted whole milk mozzarella on chicken parmesan. Only continuous melted cheese surface from edge to edge; no outline, no chicken, no plate, no basil, no sauce, no text. The photographed area represents 6 cm by 6 cm. Soft ivory and buttery cream cheese, visibly browned irregular blisters and toasted golden pools across about 25 percent of the surface, a few small deep amber caramelized spots, tiny collapsed bubbles, fine natural stretches and curd folds. Organic fused molten surface, very appetizing realistic food photography, NOT a grid, NOT repetitive circles, NOT uniform flecks, NOT rubbery pizza plastic. Matte cross-polarized soft diffuse neutral lighting, no shadows or baked directional highlights, no depth of field. Ivory has natural color and subtle variation, avoid pure white. Rich accurate surface detail intended to be mapped onto actual 3D melted cheese geometry.
+
+## sauce-color.png
+
+Use case: photorealistic-natural. Asset type: base-color material texture for a 3D chicken parmesan game asset. A square full-frame orthographic straight-down macro surface texture of thick cooked Italian marinara tomato sauce. Represents a 6 cm by 6 cm area. Very finely crushed softened tomato pulp, irregular small tomato fragments, faint olive oil marbling, sparse tiny oregano specks, warm brick red and rich tomato red with natural fine color variation. The entire image is continuous sauce edge to edge, no bowl, no plate, no sauce outline, no chicken, no cheese, no leaf garnish, no lettering. Soft diffuse cross-polarized lighting with minimal directional shadow or shiny white highlights, no depth of field, no perspective. Natural appetizing cooked tomato surface, not ketchup, not smooth red plastic, not ground meat. Fine detail suitable for projection onto a modeled sauce layer; photo-realistic material color texture.

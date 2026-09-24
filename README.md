@@ -20,9 +20,9 @@ The same URL restores the previous session in that browser, including unfinished
 
 ## Included
 
-The original 15 foods and textures, converted from the Unity FBX files to GLB at their original scale; a 29 cm porcelain plate; the furnished cafeteria, kitchen, buffet counters, dining furniture and distant diners; guided camera transitions; desktop and touch controls; menus and instructions; sound; configurable conditions; SQLite storage; CSV/JSON exports; screenshot logging; offline queues; refresh recovery; and the Qualtrics/Prolific identity and iframe bridge.
+Fifteen foods: fourteen original Unity models and a newly authored chicken parmesan with detailed 2K textures; a 29 cm porcelain plate; the furnished cafeteria, kitchen, buffet counters, dining furniture and distant diners; guided camera transitions; desktop and touch controls; menus and instructions; sound; configurable conditions; SQLite storage; CSV/JSON exports; screenshot logging; offline queues; refresh recovery; and the Qualtrics/Prolific identity and iframe bridge.
 
-Placement uses the actual food mesh surfaces on a 3 mm grid to find supported positions. Serving is animated; portions rest at their assigned positions. This replaces Unity rigidbody simulation with the assisted placement permitted by the ask list.
+Placement uses the actual food mesh surfaces on a 3 mm grid to find supported positions. Chicken parmesan bends and settles as it lands, with tomato and oil pooling beneath it. Serving is animated; portions rest at their supported positions. See [chicken assets and motion](docs/CHICKEN_REALISM.md) for source files, rebuilding and limitations. This replaces Unity rigidbody simulation with the assisted placement permitted by the ask list.
 
 ## Run the research version locally
 
@@ -61,7 +61,7 @@ The browser test uses an installed Google Chrome, a temporary profile, a tempora
 
 Optional cross-browser checks: `.venv/bin/playwright install webkit firefox`, then `.venv/bin/python tools/test_browsers.py` with the local server running. The Qualtrics snippet contract check is `node study/test_integration.cjs` when Node.js is available.
 
-Reconvert food assets with Blender 4.5+:
+Reconvert the original food assets with Blender 4.5+ (this overwrites the revised chicken; preserve it separately):
 
 ```sh
 blender --background --factory-startup --python tools/convert_food.py -- /path/to/Asta_test

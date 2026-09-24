@@ -20,10 +20,20 @@ export function sampleShape(root,angle){
   }
   return [...map.values()];
 }
-function surface(r){if(r<.106)return .009;return .01+(Math.min(r,.139)-.106)/.033*.0135;}
+// Match the upper profile in makePlate, including the sloping porcelain rim.
+export function plateSurface(r){
+  if(r<=.095)return .009;
+  if(r<=.106)return .009+(r-.095)/.011*.001;
+  if(r<=.115)return .010+(r-.106)/.009*.007;
+  return .017+(Math.min(r,.139)-.115)/.024*.0065;
+}
+export function supportAt(grid,x,z){
+  const ix=Math.round(x/CELL)+MID,iz=Math.round(z/CELL)+MID;
+  return Math.max(plateSurface(Math.hypot(x,z)),ix>=0&&ix<N&&iz>=0&&iz<N?grid[iz*N+ix]:0);
+}
 export class Placement {
   constructor(){this.reset();}
-  reset(){this.grid=new Float32Array(N*N);for(let z=0;z<N;z++)for(let x=0;x<N;x++)this.grid[z*N+x]=surface(Math.hypot(x-MID,z-MID)*CELL);}
+  reset(){this.grid=new Float32Array(N*N);for(let z=0;z<N;z++)for(let x=0;x<N;x++)this.grid[z*N+x]=plateSurface(Math.hypot(x-MID,z-MID)*CELL);}
   occupy(p){for(const v of p.shape){const x=v.ix+Math.round(p.x/CELL)+MID,z=v.iz+Math.round(p.z/CELL)+MID;if(x>=0&&x<N&&z>=0&&z<N)this.grid[z*N+x]=Math.max(this.grid[z*N+x],p.y+v.high);}}
   rebuild(portions){this.reset();for(const p of portions)this.occupy(p);}
   heightAt(shape,x,z){
