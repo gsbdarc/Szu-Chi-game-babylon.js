@@ -19,12 +19,22 @@ float hash(float n){return fract(sin(n)*43758.5453);}
 void main(){
   vec2 px=1./screenSize,c=vUV-.5;
   float r=length(c*vec2(screenSize.x/screenSize.y,1.));
+  // Kuwahara filter: each pixel takes the mean of its least-varied quadrant, which dissolves
+  // texture grain into flat patches of colour while keeping edges crisp.
+  vec3 m0=vec3(0.),m1=vec3(0.),m2=vec3(0.),m3=vec3(0.),s0=vec3(0.),s1=vec3(0.),s2=vec3(0.),s3=vec3(0.);
+  for(int j=0;j<=3;j++)for(int i=0;i<=3;i++){
+    vec3 a0=texture2D(textureSampler,vUV+vec2(-i,-j)*px).rgb,a1=texture2D(textureSampler,vUV+vec2(i,-j)*px).rgb,a2=texture2D(textureSampler,vUV+vec2(-i,j)*px).rgb,a3=texture2D(textureSampler,vUV+vec2(i,j)*px).rgb;
+    m0+=a0;s0+=a0*a0;m1+=a1;s1+=a1*a1;m2+=a2;s2+=a2*a2;m3+=a3;s3+=a3*a3;}
+  m0/=16.;m1/=16.;m2/=16.;m3/=16.;
+  float v0=dot(s0/16.-m0*m0,vec3(1.)),v1=dot(s1/16.-m1*m1,vec3(1.)),v2=dot(s2/16.-m2*m2,vec3(1.)),v3=dot(s3/16.-m3*m3,vec3(1.));
+  vec3 col=m0;float best=v0;if(v1<best){best=v1;col=m1;}if(v2<best){best=v2;col=m2;}if(v3<best){col=m3;}
   vec2 off=c*aberration*.014;
-  vec3 col=vec3(texture2D(textureSampler,vUV+off).r,texture2D(textureSampler,vUV).g,texture2D(textureSampler,vUV-off).b);
-  // Cel shading: pull luminance toward four flat bands, then push saturation.
-  float l=luma(col),band=(floor(l*4.)+.5)/4.;
-  col*=mix(1.,band/max(l,.02),.5);
-  col=max(mix(vec3(luma(col)),col,1.55),0.);
+  col.r=mix(col.r,texture2D(textureSampler,vUV+off).r,min(1.,aberration*.4));col.b=mix(col.b,texture2D(textureSampler,vUV-off).b,min(1.,aberration*.4));
+  // Hard cel shading: three flat tones per hue (shadow, base, light), then push saturation.
+  float l=luma(col),band=l<.28?.2:l<.62?.5:.84;
+  col=mix(col,col*(band/max(l,.02)),.85);
+  col=max(mix(vec3(luma(col)),col,1.4),0.);
+  l=band;
   // Ink lines from depth discontinuities and strong luminance edges.
   float d=texture2D(depthSampler,vUV).r;
   float dx=abs(texture2D(depthSampler,vUV+vec2(px.x,0.)).r-texture2D(depthSampler,vUV-vec2(px.x,0.)).r);
@@ -38,7 +48,6 @@ void main(){
   vec2 g=mat2(.707,-.707,.707,.707)*gl_FragCoord.xy/5.;
   float shade=smoothstep(.42,.1,l);
   col*=1.-.35*shade*step(length(fract(g)-.5),.42*shade+.08);
-  col+=smoothstep(.72,1.,l)*.2;
   // Speed lines radiate from the centre while the camera travels.
   float a=atan(c.y,c.x),line=step(.8,hash(floor(a*90.)+floor(time*20.)));
   col=mix(col,vec3(1.),line*smoothstep(.2,.62,r)*speed*.8);
@@ -60,6 +69,18 @@ const MASCOT=`<svg viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradien
 <ellipse cx="34" cy="72" rx="7" ry="4" fill="#ff9ec7" opacity=".8"/><ellipse cx="86" cy="72" rx="7" ry="4" fill="#ff9ec7" opacity=".8"/>
 <path d="M53 72 Q56.5 77 60 72 Q63.5 77 67 72" fill="none" stroke="#22122a" stroke-width="3" stroke-linecap="round"/></svg>`;
 
+// The onigiri mascot in a few moods and fillings, as standalone SVG for images and textures.
+export function onigiri({mood='smile',filling=null}={}){
+  const eyes=mood==='happy'?'<path d="M38 62 Q45 52 52 62" fill="none" stroke="#22122a" stroke-width="4" stroke-linecap="round"/><path d="M68 62 Q75 52 82 62" fill="none" stroke="#22122a" stroke-width="4" stroke-linecap="round"/>':'<ellipse cx="45" cy="60" rx="6" ry="9" fill="#22122a"/><ellipse cx="75" cy="60" rx="6" ry="9" fill="#22122a"/><circle cx="47" cy="56" r="2.6" fill="#fff"/><circle cx="77" cy="56" r="2.6" fill="#fff"/>';
+  const mouth=mood==='wow'?'<ellipse cx="60" cy="75" rx="5" ry="6" fill="#22122a"/><ellipse cx="60" cy="77" rx="3" ry="2.5" fill="#ff6b8e"/>':'<path d="M53 72 Q56.5 77 60 72 Q63.5 77 67 72" fill="none" stroke="#22122a" stroke-width="3" stroke-linecap="round"/>';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><path d="M60 8 C72 8 112 78 108 94 C104 110 16 110 12 94 C8 78 48 8 60 8Z" fill="#fff" stroke="#22122a" stroke-width="4" stroke-linejoin="round"/>${filling?`<ellipse cx="60" cy="36" rx="9" ry="6" fill="${filling}" stroke="#22122a" stroke-width="2"/>`:''}<rect x="36" y="80" width="48" height="26" rx="4" fill="#1f3b2d" stroke="#22122a" stroke-width="3"/>${eyes}<ellipse cx="34" cy="72" rx="7" ry="4" fill="#ff9ec7" opacity=".8"/><ellipse cx="86" cy="72" rx="7" ry="4" fill="#ff9ec7" opacity=".8"/>${mouth}</svg>`;
+}
+const svgURL=svg=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+const FILLINGS=[null,'#ff8a65','#e53950','#7cc36a','#ffcf40'],MOODS=['smile','happy','wow'];
+// Available to the stylesheet before the game loads (loading spinner, dialog peeker).
+document.documentElement.style.setProperty('--onigiri',`url("${svgURL(onigiri())}")`);
+document.documentElement.style.setProperty('--onigiri-wow',`url("${svgURL(onigiri({mood:'wow',filling:'#ff8a65'}))}")`);
+
 export function installAnime(game){
   const {scene,camera,canvas,engine}=game,stage=document.getElementById('stage');
   document.documentElement.classList.add('anime');
@@ -68,6 +89,9 @@ export function installAnime(game){
   const post=new B.PostProcess('Anime cel and ink','anime',['screenSize','time','aberration','speed','flash'],['depthSampler'],1,camera);
   post.onApply=e=>{e.setTexture('depthSampler',depth);e.setFloat2('screenSize',post.width,post.height);e.setFloat('time',fx.time);e.setFloat('aberration',fx.aberration);e.setFloat('speed',fx.speed);e.setFloat('flash',fx.flash);};
   camera.layerMask|=FX_LAYER;
+  // Flat, matte materials: drop normal-map detail and gloss so light gives flat tones, not gradients.
+  const flatten=m=>{if(!(m instanceof B.PBRMaterial))return;m.bumpTexture=null;m.metallic=Math.min(m.metallic??0,.15);m.roughness=Math.max(m.roughness??1,.9);m.metallicTexture=null;m.useRoughnessFromMetallicTextureAlpha=false;m.useRoughnessFromMetallicTextureGreen=false;};
+  for(const m of scene.materials)flatten(m);for(const model of game.models.values())for(const m of model.materials)flatten(m);scene.environmentIntensity=.3;
   scene.clearColor=new B.Color4(.99,.84,.92,1);
   const sky=scene.materials.find(m=>m.name==='Campus daylight');if(sky){sky.albedoColor=B.Color3.FromHexString('#8fd3ff');sky.emissiveColor=new B.Color3(.45,.7,1);}
   const glow=scene.materials.find(m=>m.name==='Warm fixtures');if(glow)glow.emissiveColor=new B.Color3(1,.7,.9);
@@ -77,13 +101,25 @@ export function installAnime(game){
   petals.minSize=.028;petals.maxSize=.055;petals.minLifeTime=9;petals.maxLifeTime=14;petals.emitRate=calm?8:30;petals.gravity=V(0,-.22,0);petals.direction1=V(-.35,-.4,-.25);petals.direction2=V(.35,-.1,.3);
   petals.minEmitPower=.1;petals.maxEmitPower=.3;petals.minAngularSpeed=-2.5;petals.maxAngularSpeed=2.5;petals.blendMode=B.ParticleSystem.BLENDMODE_STANDARD;petals.preWarmCycles=300;petals.start();
   const starTex=sprite(scene,'sparkle',star),heartTex=sprite(scene,'heart',heart);
+  // Onigiri friends around the hall: peeking between trays, sitting at tables, on the machine.
+  const friends=[];
+  (async()=>{
+    const spots=[...[1,4,7,10,13].map(i=>[(i-7)*.7+.35,.9275,.36]),[-6.78,.772,-1.3],[6.78,.772,-3.15],[-6.78,.772,-5],[6.45,.772,-5.71],[5.72,1.52,.3]];
+    for(const [k,[x,y,z]] of spots.entries()){
+      const img=new Image();img.src=svgURL(onigiri({mood:MOODS[k%3],filling:FILLINGS[k%FILLINGS.length]}));await img.decode();
+      const t=new B.DynamicTexture('Onigiri friend '+k,256,scene,true);t.getContext().drawImage(img,0,0,256,256);t.update();t.hasAlpha=true;
+      const m=new B.StandardMaterial('Onigiri friend '+k,scene);m.diffuseTexture=t;m.useAlphaFromDiffuseTexture=true;m.emissiveColor=B.Color3.White();m.disableLighting=true;m.backFaceCulling=false;
+      const size=k<5?.13:.17,mesh=B.MeshBuilder.CreatePlane('Onigiri friend',{size},scene);mesh.material=m;mesh.billboardMode=B.Mesh.BILLBOARDMODE_Y;mesh.isPickable=false;mesh.layerMask=FX_LAYER;
+      friends.push({mesh,base:y+size/2,x,z,phase:k*1.7,hop:0});mesh.position.set(x,y+size/2,z);
+    }
+  })();
   function burst(at,{count=45,texture=starTex,size=[.012,.04],power=[.25,.8],colors=[[1,.95,.6],[.6,.95,1]],life=[.4,1],gravity=-.6}={}){
     const ps=new B.ParticleSystem('Kira kira',count,scene);ps.particleTexture=texture;ps.layerMask=FX_LAYER;ps.emitter=at.clone();ps.createSphereEmitter(.02);
     ps.color1=new B.Color4(...colors[0],1);ps.color2=new B.Color4(...colors[1],1);ps.colorDead=new B.Color4(1,1,1,0);ps.minSize=size[0];ps.maxSize=size[1];ps.minLifeTime=life[0];ps.maxLifeTime=life[1];
     ps.minEmitPower=power[0];ps.maxEmitPower=power[1];ps.gravity=V(0,gravity,0);ps.minAngularSpeed=-4;ps.maxAngularSpeed=4;ps.blendMode=texture===heartTex?B.ParticleSystem.BLENDMODE_STANDARD:B.ParticleSystem.BLENDMODE_ONEONE;
     ps.emitRate=0;ps.manualEmitCount=count;ps.targetStopDuration=life[1]+.3;ps.disposeOnStop=true;ps.start();
   }
-  function impact(strength=1){if(calm)return;fx.flash=Math.max(fx.flash,.28*strength);fx.aberration=Math.max(fx.aberration,1.6*strength);fx.punch=Math.max(fx.punch,strength);}
+  function impact(strength=1){for(const f of friends)f.hop=Math.max(f.hop,strength);if(calm)return;fx.flash=Math.max(fx.flash,.28*strength);fx.aberration=Math.max(fx.aberration,1.6*strength);fx.punch=Math.max(fx.punch,strength);}
   // Frame loop: decay impacts, speed lines and dutch angle while travelling, FOV punch-in.
   // Portions in flight from a tray; each gets a sparkle burst when it lands.
   const watch=[];
@@ -93,6 +129,7 @@ export function installAnime(game){
     const travelling=game.moving&&game.started&&!game.plateView&&!calm;fx.speed+=((travelling?1:0)-fx.speed)*Math.min(1,dt*8);
     fx.tilt+=((travelling?.09*Math.sin(fx.time*2.3):0)-fx.tilt)*Math.min(1,dt*5);camera.upVector.copyFromFloats(Math.sin(fx.tilt),Math.cos(fx.tilt),0);
     if(!game.moving){if(punchFov===0)baseFov=camera.fov;fx.punch*=Math.exp(-dt*7);punchFov=fx.punch>.01?fx.punch*.05:0;camera.fov=baseFov*(1-punchFov);}
+    for(const f of friends){f.hop*=Math.exp(-dt*3);f.mesh.position.y=f.base+Math.abs(Math.sin(fx.time*(3+f.hop*6)+f.phase))*(.012+f.hop*.05);}
     for(const w of watch.splice(0)){if(w.p.animating)watch.push(w);else landed(w);}
   });
   function landed(w){if(w.p.root.isDisposed())return;const at=w.p.root.getAbsolutePosition().add(V(0,.03,0));burst(at);sfx(pick(['キラキラ!!','KIRA KIRA!','✧ SUGOI ✧','ドーン!!']),project(at));chime();impact(.8);}
@@ -102,7 +139,7 @@ export function installAnime(game){
   function sfx(text,at=null,{size=1,color=pick(['pink','cyan','yellow','violet'])}={}){const r=stage.getBoundingClientRect(),el=document.createElement('span');el.className='sfx '+color;el.textContent=text;const x=at?.x??r.width*(.25+Math.random()*.5),y=at?.y??r.height*(.3+Math.random()*.3);el.style.cssText=`left:${x}px;top:${y}px;--r:${(Math.random()*24-12).toFixed(1)}deg;--s:${size}`;layer.append(el);setTimeout(()=>el.remove(),1500);}
   const mascot=document.createElement('div');mascot.id='mascot';mascot.innerHTML=MASCOT+'<div class="bubble" role="status" aria-live="polite"></div>';stage.append(mascot);
   let sayTimer;function say(text,mood='happy'){const b=mascot.querySelector('.bubble');b.textContent=text;mascot.className='talking '+mood;void mascot.offsetWidth;mascot.classList.add('bounce');clearTimeout(sayTimer);sayTimer=setTimeout(()=>mascot.className='',2800);}
-  async function eyecatch(title,subtitle){const el=document.createElement('div');el.className='eyecatch';el.innerHTML=`<div class="burst"></div><div class="panel"><small>${subtitle}</small><b>${title}</b></div>`;stage.append(el);await wait(2300);el.remove();}
+  async function eyecatch(title,subtitle){const el=document.createElement('div');el.className='eyecatch';el.innerHTML=`<div class="burst"></div><div class="panel"><img class="star-onigiri" alt="" src="${svgURL(onigiri({mood:'wow',filling:'#ff8a65'}))}"><small>${subtitle}</small><b>${title}</b></div>`;stage.append(el);await wait(2300);el.remove();}
   // Sound: pentatonic sparkle chime and a filtered-noise whoosh, through the game's own mix.
   function chime(){const a=game.audio;if(!a||!game.soundOn)return;a.resume();[1318.5,1568,1760,2093,2637].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*.055;o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.connect(g);g.connect(game.gain);o.start(t);o.stop(t+.4);});}
   function whoosh(){const a=game.audio;if(!a||!game.soundOn)return;a.resume();const n=a.sampleRate*.4,buf=a.createBuffer(1,n,a.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime;s.buffer=buf;f.type='bandpass';f.Q.value=1.5;f.frequency.setValueAtTime(350,t);f.frequency.exponentialRampToValueAtTime(2600,t+.35);g.gain.value=.35;s.connect(f);f.connect(g);g.connect(game.gain);s.start(t);}
@@ -115,7 +152,8 @@ export function installAnime(game){
   wrap('pour',async(original)=>{const d=game.dispensers.get(game.station);sfx('GACHAN!!',project(d.lever.getAbsolutePosition()),{color:'cyan'});say('Soft Serve no Jutsu!! ☆','fired');impact(.6);
     let alive=true;(async()=>{await wait(700);if(alive)sfx('ジュワ〜♪',project(d.nozzle),{color:'pink'});while(alive&&game.pouring){burst(d.nozzle.add(V(0,-.02,0)),{count:4,texture:heartTex,size:[.012,.022],power:[.15,.35],gravity:.15,life:[.6,1.1]});await wait(160);}})();
     try{return await original();}finally{alive=false;const p=game.portions.at(-1);if(p?.layer!==undefined){const at=p.root.getAbsolutePosition().add(V(0,.08,0));burst(at,{count:60});burst(at,{count:14,texture:heartTex,size:[.015,.03],gravity:.2});sfx(p.layer?'PURU PURU♡ TOWER!!':'PURU PURU♡',project(at),{color:'pink',size:p.layer?1.3:1});chime();impact(1);}}});
-  wrap('navigate',async(original,index)=>{const from=game.station,go=!game.busy&&index>=0&&index<game.foods.length&&index!==from;if(go){whoosh();sfx(pick(['シュッ!','ZOOM!!','いくぞ!','DASH!']),null,{size:.9});}
+  function parade(right){const troupe=document.createElement('div');troupe.className='parade'+(right?'':' left');for(let k=0;k<5;k++){const img=document.createElement('img');img.alt='';img.src=svgURL(onigiri({mood:MOODS[k%3],filling:FILLINGS[k]}));img.style.animationDelay=`${k*.07}s`;troupe.append(img);}layer.append(troupe);setTimeout(()=>troupe.remove(),1700);}
+  wrap('navigate',async(original,index)=>{const from=game.station,go=!game.busy&&index>=0&&index<game.foods.length&&index!==from;if(go){whoosh();if(!calm)parade(index>from);sfx(pick(['シュッ!','ZOOM!!','いくぞ!','DASH!']),null,{size:.9});}
     const result=await original(index);if(go)say(game.current.dispenser?'Th-the legendary soft serve machine?!':pick([`${game.current.name}, appear!!`,`Next up: ${game.current.name}! ✧`,'Ikuzo~!','Hmm… this one smells amazing']));return result;});
   wrap('togglePlate',async(original)=>{if(!game.busy){sfx(game.plateView?'もどる!':'ジャーン!!',null,{color:'violet'});whoosh();}return original();});
   wrap('remove',(original,portion)=>{const before=game.portions.length,result=original(portion);if(game.portions.length<before){sfx('さよなら…',null,{color:'violet',size:.8});say('Sayonara, little portion… (╥﹏╥)','sad');}return result;});
@@ -124,7 +162,7 @@ export function installAnime(game){
   wrap('begin',async(original,...args)=>{if(!game.started){eyecatch('THE BUFFET AWAKENS!!','EPISODE 01');setTimeout(()=>say('Yoroshiku! Let\'s build the ultimate plate!! ☆'),2000);}return original(...args);});
   wrap('toast',(original,text)=>original(text+'  '+pick(['(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧','☆⌒(ゝ。∂)','(๑˃ᴗ˂)ﻭ','ヽ(>∀<☆)ノ','(✿◠‿◠)'])));
   wrap('showCompletion',(original)=>{const result=original();if(!calm){canvas.classList.add('freeze');confetti();}const tbc=document.createElement('div');tbc.className='tbc';tbc.innerHTML='<span>To Be Continued</span>';game.dialog.append(tbc);sfx('MISSION COMPLETE!!',null,{size:1.5,color:'yellow'});say('Otsukaresama deshita!! ✧','happy');return result;});
-  function confetti(){const c=document.createElement('canvas');c.className='confetti';game.dialog.append(c);const g=c.getContext('2d'),w=c.width=innerWidth,h=c.height=innerHeight,colors=['#ff5fa2','#38d6ff','#ffe45c','#b98cff','#7dffb2'];const bits=Array.from({length:160},()=>({x:Math.random()*w,y:-Math.random()*h,vx:Math.random()*2-1,vy:2+Math.random()*3,r:Math.random()*6,s:4+Math.random()*6,c:pick(colors)}));let frames=0;(function step(){g.clearRect(0,0,w,h);for(const b of bits){b.x+=b.vx;b.y+=b.vy;b.r+=.1;g.save();g.translate(b.x,b.y);g.rotate(b.r);g.fillStyle=b.c;g.fillRect(-b.s/2,-b.s/4,b.s,b.s/2);g.restore();}if(++frames<360)requestAnimationFrame(step);else c.remove();})();}
+  function confetti(){const c=document.createElement('canvas');c.className='confetti';game.dialog.append(c);const g=c.getContext('2d'),w=c.width=innerWidth,h=c.height=innerHeight,colors=['#ff5fa2','#38d6ff','#ffe45c','#b98cff','#7dffb2'];const rice=new Image();rice.src=svgURL(onigiri({mood:'happy'}));const bits=Array.from({length:160},(_,k)=>({x:Math.random()*w,y:-Math.random()*h,vx:Math.random()*2-1,vy:2+Math.random()*3,r:Math.random()*6,s:4+Math.random()*6,c:pick(colors),rice:k%6===0}));let frames=0;(function step(){g.clearRect(0,0,w,h);for(const b of bits){b.x+=b.vx;b.y+=b.vy;b.r+=.1;g.save();g.translate(b.x,b.y);g.rotate(b.r);if(b.rice&&rice.complete)g.drawImage(rice,-16,-16,32,32);else{g.fillStyle=b.c;g.fillRect(-b.s/2,-b.s/4,b.s,b.s/2);}g.restore();}if(++frames<360)requestAnimationFrame(step);else c.remove();})();}
   // Title flourish.
   document.title='✧ The Common Table ✧ Anime Buffet Arc';
 }
