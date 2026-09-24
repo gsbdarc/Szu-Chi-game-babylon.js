@@ -169,6 +169,15 @@ class HTTPTests(unittest.TestCase):
         status, body, _ = self.request("GET", "/api/config")
         self.assertFalse(json.loads(body)["screenshotsEnabled"])
         self.assertEqual(self.request("GET", "/researcher")[0], 200)
+    def test_audio_condition_round_trips_and_rejects_out_of_range_levels(self):
+        config = dict(DEFAULT_CONFIG, musicEnabled=False, musicVolume=0, ambienceEnabled=True, ambienceVolume=0.8)
+        self.assertEqual(self.request("POST", "/api/admin/conditions", {"name": "no_music", "config": config})[0], 200)
+        served = json.loads(self.request("GET", "/api/config?condition=no_music")[1])
+        self.assertFalse(served["musicEnabled"])
+        self.assertEqual(served["ambienceVolume"], 0.8)
+        for bad in ({"musicVolume": 1.5}, {"ambienceVolume": -0.1}, {"musicEnabled": "yes"}, {"musicVolume": None}):
+            body = {"name": "bad_audio", "config": dict(config, **bad)}
+            self.assertEqual(self.request("POST", "/api/admin/conditions", body)[0], 400, bad)
     def test_researcher_settings_reject_foreign_origin_and_unknown_food(self):
         body = {"name": "new_condition", "config": dict(DEFAULT_CONFIG)}
         self.assertEqual(self.request("POST", "/api/admin/conditions", body, {"Origin": "https://survey.example.edu"})[0], 401)

@@ -26,6 +26,7 @@ MAX_JSON = 2 * 1024 * 1024
 MAX_PNG = 8 * 1024 * 1024
 DEFAULT_CONFIG = {
     "condition": "default", "screenshotsEnabled": True, "soundEnabled": True,
+    "musicEnabled": True, "musicVolume": 0.35, "ambienceEnabled": True, "ambienceVolume": 0.5,
     "allowRemoval": True, "maxPortions": 40, "apiBaseUrl": "", "parentOrigin": "",
     "introSeconds": 4, "foodOrder": [], "studyTitle": "Welcome to the buffet",
     "instructions": "Imagine choosing a meal at a buffet. Explore the dishes and serve the amount you would like to eat. There are no right or wrong choices."
@@ -330,7 +331,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise APIError(400, "Expected configuration")
                 clean = dict(DEFAULT_CONFIG)
                 clean["condition"] = name
-                for key in ("screenshotsEnabled", "soundEnabled", "allowRemoval"):
+                for key in ("screenshotsEnabled", "soundEnabled", "musicEnabled", "ambienceEnabled", "allowRemoval"):
                     if type(config.get(key)) is not bool:
                         raise APIError(400, "Invalid " + key)
                     clean[key] = config[key]
@@ -338,7 +339,7 @@ class Handler(BaseHTTPRequestHandler):
                     if not isinstance(config.get(key), str) or not 1 <= len(config[key]) <= limit:
                         raise APIError(400, "Invalid " + key)
                     clean[key] = config[key]
-                for key, low, high in (("maxPortions", 1, 200), ("introSeconds", 0, 30)):
+                for key, low, high in (("maxPortions", 1, 200), ("introSeconds", 0, 30), ("musicVolume", 0, 1), ("ambienceVolume", 0, 1)):
                     value = number(config.get(key), key, high)
                     if value < low or (key == "maxPortions" and type(value) is not int):
                         raise APIError(400, "Invalid " + key)

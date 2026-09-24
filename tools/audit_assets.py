@@ -34,6 +34,15 @@ for food in menu:
     assert item['bytes']==len(data)
     rows.append(dict(id=food['id'],revision=item.get('revision','original'),embeddedImages=len(asset['images']),bytes=len(data),maxScaleDeviationMeters=deviation))
 assert len(rows)==15 and len({r['id'] for r in rows})==15
-result={'foods':rows,'vendor':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (ROOT/'web/vendor').iterdir() if p.is_file()}}
+audio=json.loads((ROOT/'web/assets/audio/manifest.json').read_text())
+for item in audio:
+    path=ROOT/'web/assets/audio'/item['file']
+    data=path.read_bytes()
+    assert data[4:8]==b'ftyp' and len(data)==item['bytes'],f"{item['file']} is not the manifested MP4 audio"
+    assert hashlib.sha256(data).hexdigest()==item['sha256'],f"{item['file']} does not match its recorded digest"
+    assert item['license'] and item['source'] and item['attribution']
+assert {item['role'] for item in audio}=={'music','ambience'}
+result={'foods':rows,'audio':[{k:item[k] for k in ('id','role','license','seconds','bytes','sha256')} for item in audio],'vendor':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (ROOT/'web/vendor').iterdir() if p.is_file()}}
 (ROOT/'docs/ASSET_AUDIT.json').write_text(json.dumps(result,indent=2))
 print('PASS: 15 GLBs with embedded PBR maps and previews; 14 original models and the revised chicken match their source metrics within 0.01 mm.')
+print(f'PASS: {len(audio)} licensed audio beds match their recorded digests.')
