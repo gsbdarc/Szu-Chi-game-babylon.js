@@ -1,0 +1,13 @@
+{
+  "name": "asta-babylon-buffet",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Babylon.js recreation of Asta_test's Common Table buffet simulator",
+  "type": "module",
+  "scripts": {
+    "start": "python3 server/buffet_server.py",
+    "test": "python3 -m unittest discover -s server -p 'test_server.py'",
+    "package": "python3 tools/package.py",
+    "build:pages": "python3 tools/build_pages.py"
+  }
+}

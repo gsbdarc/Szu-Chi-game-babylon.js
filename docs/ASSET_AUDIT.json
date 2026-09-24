@@ -1,0 +1,100 @@
+{
+  "foods": [
+    {
+      "id": "chicken_parmesan",
+      "embeddedImages": 3,
+      "bytes": 5030148,
+      "maxScaleDeviationMeters": 4.999999999991123e-06
+    },
+    {
+      "id": "pizza",
+      "embeddedImages": 3,
+      "bytes": 2431612,
+      "maxScaleDeviationMeters": 2.999999999999531e-06
+    },
+    {
+      "id": "burger",
+      "embeddedImages": 3,
+      "bytes": 3971224,
+      "maxScaleDeviationMeters": 3.0000000000030003e-06
+    },
+    {
+      "id": "salmon",
+      "embeddedImages": 3,
+      "bytes": 3784588,
+      "maxScaleDeviationMeters": 1.000000000001e-06
+    },
+    {
+      "id": "beef_skewer",
+      "embeddedImages": 3,
+      "bytes": 2907188,
+      "maxScaleDeviationMeters": 3.9999999999970615e-06
+    },
+    {
+      "id": "rice",
+      "embeddedImages": 3,
+      "bytes": 3679840,
+      "maxScaleDeviationMeters": 1.9999999999985307e-06
+    },
+    {
+      "id": "pasta",
+      "embeddedImages": 3,
+      "bytes": 3030156,
+      "maxScaleDeviationMeters": 3.9999999999901226e-06
+    },
+    {
+      "id": "broccoli",
+      "embeddedImages": 3,
+      "bytes": 3787000,
+      "maxScaleDeviationMeters": 3.0000000000030003e-06
+    },
+    {
+      "id": "roasted_carrots",
+      "embeddedImages": 3,
+      "bytes": 3367976,
+      "maxScaleDeviationMeters": 3.0000000000030003e-06
+    },
+    {
+      "id": "mashed_potatoes",
+      "embeddedImages": 3,
+      "bytes": 2713604,
+      "maxScaleDeviationMeters": 2.000000000002e-06
+    },
+    {
+      "id": "kale_salad",
+      "embeddedImages": 3,
+      "bytes": 3333968,
+      "maxScaleDeviationMeters": 3.0000000000030003e-06
+    },
+    {
+      "id": "bread_roll",
+      "embeddedImages": 3,
+      "bytes": 2922148,
+      "maxScaleDeviationMeters": 4.000000000004e-06
+    },
+    {
+      "id": "fruit_salad",
+      "embeddedImages": 3,
+      "bytes": 3594204,
+      "maxScaleDeviationMeters": 2.000000000002e-06
+    },
+    {
+      "id": "chocolate_cake",
+      "embeddedImages": 3,
+      "bytes": 4072824,
+      "maxScaleDeviationMeters": 5.999999999992123e-06
+    },
+    {
+      "id": "cookie",
+      "embeddedImages": 3,
+      "bytes": 3004392,
+      "maxScaleDeviationMeters": 3.9999999999901226e-06
+    }
+  ],
+  "vendor": {
+    "environment.env": "ca3e30921265d084d46c62c5220217d99296c0c3eacaeb40ca15f7534dfdd8bc",
+    "license.md": "9362ea9ea17cb221a20cbbd63f404710834cc273d2a9a7b60314fd68ab702cd6",
+    "babylonjs.loaders.min.js": "8d8e24898464158fd40c462f22098cf8a8e60ede1e7301c5c173062d217391a6",
+    "babylon.js": "e4e30e5c8ff6e23e2e43c90e0d3c6bab0eab194dbdf2eafed61784943586e31a"
+  }
+}

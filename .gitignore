@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+server/data/
+dist/
+.DS_Store
+artifacts/
+_site/
+*.meta
+.env
+.env.*
+*.sqlite*

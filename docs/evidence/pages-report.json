@@ -1,0 +1,22 @@
+{
+  "testedAt": "2026-09-24T20:31:29.657390+00:00",
+  "url": "http://127.0.0.1:55033/Szu-Chi-game-babylon.js/",
+  "foodsLoaded": 15,
+  "portionsRestored": 2,
+  "screenshotsRestored": 2,
+  "completionRestored": true,
+  "downloads": true,
+  "newMeal": true,
+  "mobile": true,
+  "noScreenshotCondition": true,
+  "apiCalls": [],
+  "failedRequests": [],
+  "errors": [],
+  "sourceSHA256": {
+    "web/src/app.js": "728f806dcdab5f5babe0130671af7a7213fc5bc226bb346e8cd6bf7bc74df67c",
+    "web/src/deployment.js": "cc8f4c0e9a08ae3e0ab8d7be52c0199a149ed0dbc394f345ebf388f96e498902",
+    "web/src/placement.js": "a6cf1fa86ab352c7aa128fcae4eef7cd3b70d949c6bb87d60c680c71a0e2c165",
+    "web/src/research.js": "f747087f60d1b3217e11b24140216e6f3968259f55a83702614d003e80c4380d",
+    "web/src/world.js": "7297aad6b0455fb7ada177b3ba5ff53ab0cf3c982f514c2da693a9f50fa42e60"
+  }
+}
