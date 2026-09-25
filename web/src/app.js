@@ -98,7 +98,7 @@ class BuffetGame {
     const angle=record?.rotation??((this.portions.length*137.5)%360)*Math.PI/180,tilt=record?.tilt??this.settle(root);
     const rotation=new B.Vector3(tilt.x,angle,tilt.z),shape=this.shapeFor(food.id,root,rotation);root.rotation=rotation;
     const pose=record?.position||this.placement.fit(shape),p={portionId:record?.portionId||crypto.randomUUID().replaceAll('-',''),foodId:food.id,addedAt:record?.addedAt??this.research.elapsed,root,angle,tilt,shape,...pose};
-    root.position.copyFromFloats(p.x,p.y,p.z);for(const mesh of root.getChildMeshes())mesh.metadata={portion:p.portionId};this.portions.push(p);if(food.id==='chicken_parmesan')p.motion=new ChickenMotion(p,this.plate,this.placement.grid,animate);this.placement.occupy(p);
+    root.position.copyFromFloats(p.x,p.y,p.z);for(const mesh of root.getChildMeshes())mesh.metadata={portion:p.portionId};this.portions.push(p);if(food.id==='chicken_parmesan')p.motion=new ChickenMotion(p,this.plate,this.placement.grid,animate,!!record);this.placement.occupy(p);
     if(animate&&!p.motion){p.animating=true;const from=V(0,.075,.4),to=root.position.clone(),start=performance.now();const frame=()=>{if(root.isDisposed()||!p.animating)return;const t=Math.min(1,(performance.now()-start)/430),s=t*t*(3-2*t);root.position=B.Vector3.Lerp(from,to,s);root.position.y+=Math.sin(t*Math.PI)*.045;if(t<1)requestAnimationFrame(frame);else p.animating=false;};frame();}
     return p;
   }

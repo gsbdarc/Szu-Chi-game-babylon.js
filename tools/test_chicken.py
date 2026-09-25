@@ -75,6 +75,20 @@ def check(base):
         assert snapshot(page)['session']['portions']==before
         assert scene_counts(page)['films']==2
         page.locator('#undo').click();assert scene_counts(page)==empty
+        # Chronological saved order can differ from vertical order after a drag.
+        for _ in range(2):page.locator('#add').click()
+        page.wait_for_function('buffet.snapshot().portions.every(p=>!p.motion.active)',timeout=20000)
+        page.locator('#view').click();ready(page)
+        first=page.evaluate('buffet.point("portion",0)');second=page.evaluate('buffet.point("portion",1)')
+        page.mouse.move(first['x'],first['y']);page.mouse.down()
+        page.mouse.move(second['x'],second['y'],steps=12);page.mouse.up()
+        stacked=snapshot(page)['portions']
+        assert stacked[0]['y']>stacked[1]['y']+.01
+        saved(page);page.reload();ready(page)
+        restored=snapshot(page)['portions']
+        assert [(p['x'],p['y'],p['z']) for p in restored]==[(p['x'],p['y'],p['z']) for p in stacked]
+        page.get_by_role('button',name='Continue your plate').click();ready(page)
+        page.locator('#undo').click();page.locator('#undo').click()
         # A photograph requested during serving must capture a settled portion.
         page.locator('#add').click();page.locator('#photo').click()
         page.get_by_role('heading',name='Your plate photograph').wait_for(timeout=60000)
@@ -96,7 +110,7 @@ def check(base):
         assert not errors,errors
         report={'testedAt':datetime.now(timezone.utc).isoformat(),'frames':len(frames),
                 'minimumVertexY':min(f['low'] for f in frames),'maxBendMeters':max(abs(f['bend']) for f in frames),
-                'contactBeforePooling':True,'independentGeometry':True,'drag':True,'reload':True,
+                'contactBeforePooling':True,'independentGeometry':True,'drag':True,'reload':True,'reorderedStackRestore':True,
                 'photographSettlesMotion':True,'capacity':40,'cleanup':True,'fpsAtCapacity':full['fps'],'errors':errors}
         (OUT/'report.json').write_text(json.dumps(report,indent=2))
         browser.close()

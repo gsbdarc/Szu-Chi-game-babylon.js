@@ -17,7 +17,7 @@ export function prepareChicken(root){
  * an artistic approximation, not measured food elasticity or a fluid solver.
  * Only an active serving updates vertex buffers; resting portions are static. */
 export class ChickenMotion {
-  constructor(portion,plate,grid,animate){
+  constructor(portion,plate,grid,animate,restored=false){
     this.p=portion;this.mesh=portion.root.getChildMeshes().find(m=>m.getTotalVertices());
     this.rest=new Float32Array(this.mesh.getVerticesData(B.VertexBuffer.PositionKind));
     this.positions=new Float32Array(this.rest);
@@ -25,16 +25,19 @@ export class ChickenMotion {
     this.normals=new Float32Array(this.restNormals);this.indices=this.mesh.getIndices();
     this.mesh.setVerticesData(B.VertexBuffer.PositionKind,this.positions,true);
     this.mesh.setVerticesData(B.VertexBuffer.NormalKind,this.normals,true);
-    this.film=new JuiceFilm(plate,portion);this.place(grid);
+    this.film=new JuiceFilm(plate,portion);this.place(grid,restored);
     if(animate)this.start();
   }
-  place(grid){
+  place(grid,preserveHeight=false){
     this.support=new Float32Array(grid);
     const r=this.p.root.rotation;
     this.rotation=B.Matrix.RotationYawPitchRoll(r.y,r.x,r.z).m;
     // Check actual resting vertices as well as the game's 3 mm triangle grid.
     // This preserves contact with the rim and with previously served foods.
-    this.p.y=Math.max(this.p.y,this.requiredHeight(this.rest));this.finish();
+    // Saved order is chronological, not vertical: an earlier portion may have
+    // been dragged on top of a later one. Restore their positions exactly.
+    if(!preserveHeight)this.p.y=Math.max(this.p.y,this.requiredHeight(this.rest));
+    this.finish();
   }
   requiredHeight(positions){
     const m=this.rotation,p=this.p;let height=0;
