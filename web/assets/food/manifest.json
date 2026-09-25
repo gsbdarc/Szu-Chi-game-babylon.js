@@ -19,7 +19,8 @@
       0.139372
     ],
     "source": "/Users/jeffott/Asta_test/Assets/Buffet/Food/Resources/Food/pizza.fbx",
-    "bytes": 2431612
+    "bytes": 2432076,
+    "note": "Split into pizza_crust and pizza_cheese submeshes by tools/split_pizza.py; geometry unchanged."
   },
   {
     "id": "burger",
